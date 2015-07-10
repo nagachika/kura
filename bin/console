@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "kura"
+
+service_account_json = File.expand_path("../../test/data/service_account.json", __FILE__)
+if File.readable?(service_account_json)
+  obj = JSON.parse(File.binread(service_account_json))
+  @client = Kura.client(obj["project_id"], obj["client_email"], obj["private_key"])
+end
+
+require "pry"
+Pry.start(@client)
