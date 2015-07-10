@@ -1,3 +1,14 @@
+# simplecov must be loaded before any of target code
+if ENV['COVERAGE']
+  require 'simplecov'
+  unless SimpleCov.running
+    SimpleCov.start do
+      add_filter '/test/'
+      add_filter '/gems/'
+    end
+  end
+end
+
 require "bundler"
 
 begin
