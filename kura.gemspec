@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "test-unit"
   spec.add_development_dependency "simplecov"
   spec.add_development_dependency "test-unit-power_assert"
+  spec.add_development_dependency "pry"
 end
