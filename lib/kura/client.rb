@@ -70,6 +70,15 @@ module Kura
       r.data
     end
 
+    def tables(dataset_id, project_id: @project_id, limit: 1000)
+      params = { projectId: project_id, datasetId: dataset_id, maxResult: limit }
+      r = @api.execute(api_method: @bigquery_api.tables.list, parameters: params)
+      unless r.success?
+        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+      end
+      r.data.tables
+    end
+
     def table(dataset_id, table_id, project_id: @project_id)
       params = { projectId: project_id, datasetId: dataset_id, tableId: table_id }
       r = @api.execute(api_method: @bigquery_api.tables.get, parameters: params)
