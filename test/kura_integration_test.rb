@@ -42,6 +42,47 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(@name)
     dataset = @client.dataset(@name)
     assert_nil(dataset)
+
+    err = assert_raise(Kura::ApiError) { @client.datasets(project_id: "invalid-project-000") }
+    assert_equal("notFound", err.reason)
+    assert_match(/invalid-project-000/, err.message)
+
+    err = assert_raise(Kura::ApiError) { @client.dataset("invalid:dataset") }
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
+
+    err = assert_raise(Kura::ApiError) { @client.insert_dataset("invalid:dataset") }
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
+
+    err = assert_raise(Kura::ApiError) { @client.delete_dataset("invalid:dataset") }
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
+
+    err = assert_raise(Kura::ApiError) { @client.patch_dataset("invalid:dataset", description: "dummy") }
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
+  end
+
+  def test_tables
+    @client.tables("samples", project_id: "publicdata").tap do |result|
+      assert_equal(7, result.size)
+      assert_equal([
+        "publicdata:samples.github_nested",
+        "publicdata:samples.github_timeline",
+        "publicdata:samples.gsod",
+        "publicdata:samples.natality",
+        "publicdata:samples.shakespeare",
+        "publicdata:samples.trigrams",
+        "publicdata:samples.wikipedia",
+      ], result.map(&:id).sort)
+    end
+
+    err = assert_raise(Kura::ApiError) do
+      @client.tables("nonexist")
+    end
+    assert_equal("notFound", err.reason)
+    assert_match(/nonexist/, err.message)
   end
 
   def test_table
@@ -50,12 +91,20 @@ class KuraIntegrationTest < Test::Unit::TestCase
       assert_equal({"projectId"=>"publicdata", "datasetId"=>"samples", "tableId"=>"github_timeline"}, tbl.tableReference.to_hash)
       assert_equal("TABLE", tbl.type)
     end
+
+    err = assert_raise(Kura::ApiError) do
+      @client.table("invalid:dataset", "table")
+    end
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
   end
 
   def test_delete_table
     assert_nil(@client.delete_table("_dummy", "nonexist"))
-    assert_raise(Kura::ApiError) do
+    err = assert_raise(Kura::ApiError) do
       @client.delete_table("invalid:dataset", "nonexist")
     end
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
   end
 end if File.readable?(ServiceAccountFilesPath)

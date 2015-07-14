@@ -24,7 +24,8 @@ module Kura
     def datasets(project_id: @project_id, all: false, limit: 1000)
       r = @api.execute(api_method: @bigquery_api.datasets.list, parameters: { projectId: project_id, all: all, maxResult: limit })
       unless r.success?
-        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
       end
       r.data.datasets
     end
@@ -35,7 +36,8 @@ module Kura
         if r.data.error["code"] == 404
           return nil
         else
-          raise Kura::ApiError.new(r.data.error["reason"], r.data.error["message"])
+          error = r.data["error"]["errors"][0]
+          raise Kura::ApiError.new(error["reason"], error["message"])
         end
       end
       r.data
@@ -44,7 +46,8 @@ module Kura
     def insert_dataset(dataset_id)
       r = @api.execute(api_method: @bigquery_api.datasets.insert, parameters: { projectId: @project_id }, body_object: { datasetReference: { datasetId: dataset_id } })
       unless r.success?
-        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
       end
       r.data
     end
@@ -52,7 +55,8 @@ module Kura
     def delete_dataset(dataset_id, delete_contents: false)
       r = @api.execute(api_method: @bigquery_api.datasets.delete, parameters: { projectId: @project_id, datasetId: dataset_id, deleteContents: delete_contents })
       unless r.success?
-        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
       end
       r.data
     end
@@ -65,7 +69,8 @@ module Kura
       body["friendlyName"] = friendly_name if friendly_name
       r = @api.execute(api_method: @bigquery_api.datasets.patch, parameters: { projectId: project_id, datasetId: dataset_id }, body_object: body)
       unless r.success?
-        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
       end
       r.data
     end
@@ -74,7 +79,8 @@ module Kura
       params = { projectId: project_id, datasetId: dataset_id, maxResult: limit }
       r = @api.execute(api_method: @bigquery_api.tables.list, parameters: params)
       unless r.success?
-        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
       end
       r.data.tables
     end
@@ -86,7 +92,8 @@ module Kura
         if r.data["error"]["code"] == 404
           return nil
         else
-          raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+          error = r.data["error"]["errors"][0]
+          raise Kura::ApiError.new(error["reason"], error["message"])
         end
       end
       r.data
@@ -99,7 +106,8 @@ module Kura
         if r.data["error"]["code"] == 404
           return nil
         else
-          raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+          error = r.data["error"]["errors"][0]
+          raise Kura::ApiError.new(error["reason"], error["message"])
         end
       end
       r.data
@@ -118,7 +126,8 @@ module Kura
       body = { configuration: configuration }
       r = @api.execute(api_method: @bigquery_api.jobs.insert, parameters: params, body_object: body)
       unless r.success?
-        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
       end
       if wait
         wait_job(r.data.jobReference.jobId, wait)
@@ -198,7 +207,8 @@ module Kura
       params = { projectId: @project_id, jobId: job_id }
       r = @api.execute(api_method: @bigquery_api.jobs.get, parameters: params)
       unless r.success?
-        raise Kura::ApiError.new(r.data["error"]["reason"], r.data["error"]["message"])
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
       end
       r.data
     end
