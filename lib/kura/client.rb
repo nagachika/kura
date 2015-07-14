@@ -220,6 +220,9 @@ module Kura
         if job_finished?(job_id)
           return true
         end
+        if block_given?
+          yield
+        end
         sleep 1
       end
       raise Kura::TimeoutError, "wait job timeout"
