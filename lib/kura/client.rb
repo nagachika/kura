@@ -113,6 +113,29 @@ module Kura
       r.data
     end
 
+    def list_tabledata(dataset_id, table_id, project_id: @project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil)
+      schema ||= table(dataset_id, table_id, project_id: project_id).schema.fields
+      field_names = schema.map{|f| f["name"] }
+      params = { projectId: project_id, datasetId: dataset_id, tableId: table_id, maxResults: max_result }
+      if page_token
+        params[:pageToken] = page_token
+      else
+        params[:startIndex] = start_index
+      end
+      r = @api.execute(api_method: @bigquery_api.tabledata.list, parameters: params)
+      unless r.success?
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
+      end
+      {
+        total_rows: r.data.totalRows,
+        next_token: r.data["pageToken"],
+        rows: r.data.rows.map do |row|
+          row.f.zip(field_names).each_with_object({}) do |(v, fn), tbl| tbl[fn] = v.v end
+        end
+      }
+    end
+
     def mode_to_write_disposition(mode)
       unless %i{ append truncate empty }.include?(mode)
         raise "mode option should be one of :append, :truncate, :empty but #{mode}"

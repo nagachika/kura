@@ -107,4 +107,31 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_equal("invalid", err.reason)
     assert_match(/invalid:dataset/, err.message)
   end
+
+  def test_list_tableata_with_invalid_dataset
+    err = assert_raise(Kura::ApiError) { @client.list_tabledata("invalid:dataset", "nonexist", schema: [{"name": "f1"}]) }
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
+  end
+
+  def test_query_with_invalid_dataset
+    err = assert_raise(Kura::ApiError) { @client.query("invalid:dataset", "dummy", "INVALID SQL") }
+    assert_equal("invalid", err.reason)
+    assert_match(/invalid:dataset/, err.message)
+  end
+
+  def test_query_and_tabledata
+    unless @client.dataset("_Kura_test")
+      @client.insert_dataset("_Kura_test")
+    end
+
+    assert_nothing_raised do
+      @client.query("_Kura_test", "Kura_query_result1", "SELECT count(*) FROM [publicdata:samples.wikipedia]", wait: 60)
+    end
+
+    assert_equal({next_token: nil, rows: [{"f0_"=>"313797035"}], total_rows: 1}, @client.list_tabledata("_Kura_test", "Kura_query_result1"))
+    @client.delete_table("_Kura_test", "Kura_query_result1")
+  ensure
+    @client.delete_dataset("_Kura_test", delete_contents: true)
+  end
 end if File.readable?(ServiceAccountFilesPath)
