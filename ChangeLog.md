@@ -19,7 +19,7 @@
   * `quote`
   * `skip_leading_rows`
   * `source_format`
-* Kura::Client#load keyword argument `delimiter` is deprecated. It is alias of * `field_delimiter` now.
+* Kura::Client#load keyword argument `delimiter` is deprecated. It is alias of `field_delimiter` now.
 * Fix error handling. Kura::ApiError#reason was missing.
 * Add Kura::Client#list_tabledata API.
 
