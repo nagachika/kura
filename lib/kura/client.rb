@@ -175,7 +175,7 @@ module Kura
       insert_job(configuration, wait: wait)
     end
 
-    def load(dataset_id, table_id, source_uris, schema, delimiter: ",", mode: :append, file: nil, wait: nil)
+    def load(dataset_id, table_id, source_uris=nil, schema: nil, delimiter: ",", mode: :append, file: nil, wait: nil)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
       configuration = {
@@ -187,9 +187,11 @@ module Kura
           },
           fieldDelimiter: delimiter,
           writeDisposition: write_disposition,
-          schema: { fields: schema },
         }
       }
+      if schema
+        configuration[:load][:schema] = { fields: schema }
+      end
       if file
         file = Google::APIClient::UploadIO.new(file, "application/octet-stream")
       else

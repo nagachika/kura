@@ -160,7 +160,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       ccc,ddd
     EOC
     assert_nothing_raised do
-      job_id = @client.load(dataset, table, nil, schema, file: io, mode: :truncate)
+      job_id = @client.load(dataset, table, schema: schema, file: io, mode: :truncate)
       @client.wait_job(job_id, 300)
     end
     power_assert do
