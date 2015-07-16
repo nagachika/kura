@@ -144,10 +144,13 @@ module Kura
     end
     private :mode_to_write_disposition
 
-    def insert_job(configuration, wait: nil)
+    def insert_job(configuration, media: nil, wait: nil)
       params = { projectId: @project_id }
+      if media
+        params["uploadType"] = "multipart"
+      end
       body = { configuration: configuration }
-      r = @api.execute(api_method: @bigquery_api.jobs.insert, parameters: params, body_object: body)
+      r = @api.execute(api_method: @bigquery_api.jobs.insert, parameters: params, body_object: body, media: media)
       unless r.success?
         error = r.data["error"]["errors"][0]
         raise Kura::ApiError.new(error["reason"], error["message"])
@@ -172,12 +175,11 @@ module Kura
       insert_job(configuration, wait: wait)
     end
 
-    def load(dataset_id, table_id, source_uris, schema, delimiter: ",", mode: :append, wait: nil)
+    def load(dataset_id, table_id, source_uris, schema, delimiter: ",", mode: :append, file: nil, wait: nil)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
       configuration = {
         load: {
-          sourceUris: source_uris,
           destinationTable: {
             projectId: @project_id,
             datasetId: dataset_id,
@@ -188,7 +190,12 @@ module Kura
           schema: { fields: schema },
         }
       }
-      insert_job(configuration, wait: wait)
+      if file
+        file = Google::APIClient::UploadIO.new(file, "application/octet-stream")
+      else
+        configuration[:load][:sourceUris] = source_uris
+      end
+      insert_job(configuration, media: file, wait: wait)
     end
 
     def extract(dataset_id, table_id, dest_uris, wait: nil)

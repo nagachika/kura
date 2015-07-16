@@ -1,7 +1,8 @@
 # 0.1.2
 
+* Kura::Client#load support keyword argument `file` for multipart upload.
 * Fix error handling. Kura::ApiError#reason was missing.
-* add Kura::Client#list_tabledata API.
+* Add Kura::Client#list_tabledata API.
 
 # 0.1.1
 

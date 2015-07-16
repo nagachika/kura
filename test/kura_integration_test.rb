@@ -11,6 +11,11 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @private_key = service_account["private_key"]
 
     @client = Kura.client(@project_id, @email, @private_key)
+
+    # for reduce power_assert display
+    def @client.inspect
+      super[0, 15] + "...>"
+    end
   end
 
   def test_dataset
@@ -24,7 +29,9 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_equal(@project_id, dataset.datasetReference.projectId)
     assert_equal(@name, dataset.datasetReference.datasetId)
 
-    assert(@client.datasets.map(&:id).include?("#{@project_id}:#{@name}"))
+    power_assert do
+      @client.datasets.map(&:id).include?("#{@project_id}:#{@name}")
+    end
 
     access = @client.dataset(@name).access.map(&:to_hash)
     access << {
@@ -121,17 +128,49 @@ class KuraIntegrationTest < Test::Unit::TestCase
   end
 
   def test_query_and_tabledata
-    unless @client.dataset("_Kura_test")
-      @client.insert_dataset("_Kura_test")
+    dataset = "_Kura_test"
+    table = "Kura_query_result1"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
     end
 
     assert_nothing_raised do
-      @client.query("_Kura_test", "Kura_query_result1", "SELECT count(*) FROM [publicdata:samples.wikipedia]", wait: 60)
+      @client.query(dataset, table, "SELECT count(*) FROM [publicdata:samples.wikipedia]", wait: 60)
     end
 
-    assert_equal({next_token: nil, rows: [{"f0_"=>"313797035"}], total_rows: 1}, @client.list_tabledata("_Kura_test", "Kura_query_result1"))
-    @client.delete_table("_Kura_test", "Kura_query_result1")
+    assert_equal({next_token: nil, rows: [{"f0_"=>"313797035"}], total_rows: 1}, @client.list_tabledata(dataset, table))
+    @client.delete_table(dataset, table)
   ensure
-    @client.delete_dataset("_Kura_test", delete_contents: true)
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_media_upload
+    dataset = "_Kura_test"
+    table = "Kura_upload_test1"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    schema = [
+      { name: "f1", type: "STRING", mode: "NULLABLE" },
+      { name: "f2", type: "STRING", mode: "NULLABLE" },
+    ]
+    io = StringIO.new(<<-EOC.gsub(/^\s+/, ""))
+      aaa,bbb
+      ccc,ddd
+    EOC
+    assert_nothing_raised do
+      job_id = @client.load(dataset, table, nil, schema, file: io, mode: :truncate)
+      @client.wait_job(job_id, 300)
+    end
+    power_assert do
+      "#{@project_id}:#{dataset}.#{table}" == @client.table(dataset, table).id
+    end
+    power_assert do
+      @client.list_tabledata(dataset, table) == {total_rows: 2, next_token: nil, rows: [{"f1" => "aaa", "f2" => "bbb"},{"f1" => "ccc", "f2" => "ddd"}]}
+    end
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
   end
 end if File.readable?(ServiceAccountFilesPath)
