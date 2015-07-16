@@ -169,7 +169,37 @@ class KuraIntegrationTest < Test::Unit::TestCase
     power_assert do
       @client.list_tabledata(dataset, table) == {total_rows: 2, next_token: nil, rows: [{"f1" => "aaa", "f2" => "bbb"},{"f1" => "ccc", "f2" => "ddd"}]}
     end
-    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  default_expected = [{"f1"=>"aaa", "f2"=>"bbb"}]
+  data({
+    field_delimiter: [ "aaa!bbb\n", {field_delimiter: "!"}, default_expected ],
+    allow_jagged_rows: [ "aaa\n", {allow_jagged_rows: true}, [{"f1"=>"aaa","f2"=>nil}] ],
+    max_bad_records: [ "xxx\naaa,bbb\n", {max_bad_records: 1}, default_expected ],
+    ignore_unknown_values: ["aaa,bbb,ccc\n", {ignore_unknown_values: true}, default_expected ],
+    allow_quoted_newlines: [%{"aaa\naaa",bbb}, {allow_quoted_newlines: true}, [{"f1"=>"aaa\naaa", "f2"=>"bbb"}] ],
+    skip_leading_rows: ["xxx,yyy\naaa,bbb\n", {skip_leading_rows: 1}, default_expected ],
+    source_format: [default_expected.first.to_json+"\n", {source_format: "NEWLINE_DELIMITED_JSON"}, default_expected],
+  })
+  def test_load_parameters(data)
+    csv, options, expected = data
+    dataset = "_Kura_test"
+    table = "Kura_load_parameter_#{options.keys.join("_")}_test"
+    schema = [
+      { name: "f1", type: "STRING", mode: "NULLABLE" },
+      { name: "f2", type: "STRING", mode: "NULLABLE" },
+    ]
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    assert_nothing_raised do
+      @client.load(dataset, table, schema: schema, file: StringIO.new(csv), **options, wait: 300)
+    end
+    power_assert do
+      @client.list_tabledata(dataset, table) == {total_rows: expected.size, next_token: nil, rows: expected}
+    end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
   end

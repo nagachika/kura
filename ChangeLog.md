@@ -10,6 +10,16 @@
 ## Enhancements
 
 * Kura::Client#load support keyword argument `file` for multipart upload.
+* Add optional keyword arguments of Kura::Client#load.
+  * `field_delimiter`
+  * `allow_jagged_rows`
+  * `max_bad_records`
+  * `ignore_unknown_values`
+  * `allow_quoted_newlines`
+  * `quote`
+  * `skip_leading_rows`
+  * `source_format`
+* Kura::Client#load keyword argument `delimiter` is deprecated. It is alias of * `field_delimiter` now.
 * Fix error handling. Kura::ApiError#reason was missing.
 * Add Kura::Client#list_tabledata API.
 

@@ -175,7 +175,14 @@ module Kura
       insert_job(configuration, wait: wait)
     end
 
-    def load(dataset_id, table_id, source_uris=nil, schema: nil, delimiter: ",", mode: :append, file: nil, wait: nil)
+    def load(dataset_id, table_id, source_uris=nil,
+             schema: nil, delimiter: ",", field_delimiter: delimiter, mode: :append,
+             allow_jagged_rows: false, max_bad_records: 0,
+             ignore_unknown_values: false,
+             allow_quoted_newlines: false,
+             quote: '"', skip_leading_rows: 0,
+             source_format: "CSV",
+             file: nil, wait: nil)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
       configuration = {
@@ -185,12 +192,21 @@ module Kura
             datasetId: dataset_id,
             tableId: table_id,
           },
-          fieldDelimiter: delimiter,
           writeDisposition: write_disposition,
+          allowJaggedRows: allow_jagged_rows,
+          maxBadRecords: max_bad_records,
+          ignoreUnknownValues: ignore_unknown_values,
+          sourceFormat: source_format,
         }
       }
       if schema
         configuration[:load][:schema] = { fields: schema }
+      end
+      if source_format == "CSV"
+        configuration[:load][:fieldDelimiter] = field_delimiter
+        configuration[:load][:allowQuotedNewlines] = allow_quoted_newlines
+        configuration[:load][:quote] = quote
+        configuration[:load][:skipLeadingRows] = skip_leading_rows
       end
       if file
         file = Google::APIClient::UploadIO.new(file, "application/octet-stream")
