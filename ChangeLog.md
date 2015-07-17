@@ -20,6 +20,11 @@
   * `skip_leading_rows`
   * `source_format`
 * Kura::Client#load keyword argument `delimiter` is deprecated. It is alias of `field_delimiter` now.
+* Add optional keyword arguments of Kura::Client#query.
+  * `flatten_results`
+  * `priority`
+  * `use_query_cache`
+* Kura::Client#query keyword argument `allow_large_result` is deprecated. It is alias of `allow_large_results` now.
 * Fix error handling. Kura::ApiError#reason was missing.
 * Add Kura::Client#list_tabledata API.
 

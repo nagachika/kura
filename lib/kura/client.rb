@@ -162,14 +162,23 @@ module Kura
       end
     end
 
-    def query(dataset_id, table_id, sql, mode: :truncate, allow_large_result: true, wait: nil)
+    def query(dataset_id, table_id, sql, mode: :truncate,
+              allow_large_result: true, # for backward compatibility
+              allow_large_results: allow_large_result,
+              flatten_results: true,
+              priority: "INTERACTIVE",
+              use_query_cache: true,
+              wait: nil)
       write_disposition = mode_to_write_disposition(mode)
       configuration = {
         query: {
           query: sql,
           destinationTable: { projectId: @project_id, datasetId: dataset_id, tableId: table_id },
           writeDisposition: write_disposition,
-          allowLargeResults: allow_large_result,
+          allowLargeResults: allow_large_results,
+          flattenResults: flatten_results,
+          priority: priority,
+          useQueryCache: use_query_cache,
         }
       }
       insert_job(configuration, wait: wait)
