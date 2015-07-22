@@ -27,6 +27,11 @@
   * `priority`
   * `use_query_cache`
 * Kura::Client#query keyword argument `allow_large_result` is deprecated. It is alias of `allow_large_results` now.
+* Add optional keyword arguments of Kura::Client#extract.
+  * `compression`
+  * `destination_format`
+  * `field_delimiter`
+  * `print_header`
 * Fix error handling. Kura::ApiError#reason was missing.
 * Add Kura::Client#list_tabledata API.
 

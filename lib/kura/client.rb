@@ -228,10 +228,17 @@ module Kura
       insert_job(configuration, media: file, wait: wait)
     end
 
-    def extract(dataset_id, table_id, dest_uris, wait: nil)
+    def extract(dataset_id, table_id, dest_uris,
+                compression: "NONE",
+                destination_format: "CSV",
+                field_delimiter: ",",
+                print_header: true,
+                wait: nil)
       dest_uris = [ dest_uris ] if dest_uris.is_a?(String)
       configuration = {
         extract: {
+          compression: compression,
+          destinationFormat: destination_format,
           sourceTable: {
             projectId: @project_id,
             datasetId: dataset_id,
@@ -240,6 +247,10 @@ module Kura
           destinationUris: dest_uris,
         }
       }
+      if destination_format == "CSV"
+        configuration[:extract][:fieldDelimiter] = field_delimiter
+        configuration[:extract][:printHeader] = print_header
+      end
       insert_job(configuration, wait: wait)
     end
 
