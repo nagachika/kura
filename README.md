@@ -24,7 +24,7 @@ Or install it yourself as:
 ```
 client = Kura.client(project_id, email, private_key)
 client.load("dataset", "table", "gs://mybucket/data.csv", wait: 120)
-client.query("dataset", "result", "SELECT * FROM [dataset.table];", wait: 120)
+client.query("SELECT * FROM [dataset.table];", wait: 120)
 client.extract("dataset", "result", "gs://mybucket/extracted.csv", wait: 120)
 ```
 
