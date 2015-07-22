@@ -122,7 +122,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
   end
 
   def test_query_with_invalid_dataset
-    err = assert_raise(Kura::ApiError) { @client.query("invalid:dataset", "dummy", "INVALID SQL") }
+    err = assert_raise(Kura::ApiError) { @client.query("INVALID SQL", dataset_id: "invalid:dataset", table_id: "dummy") }
     assert_equal("invalid", err.reason)
     assert_match(/invalid:dataset/, err.message)
   end
@@ -135,7 +135,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
 
     assert_nothing_raised do
-      @client.query(dataset, table, "SELECT count(*) FROM [publicdata:samples.wikipedia]", wait: 60)
+      @client.query("SELECT count(*) FROM [publicdata:samples.wikipedia]", dataset_id: dataset, table_id: table, wait: 60)
     end
 
     assert_equal({next_token: nil, rows: [{"f0_"=>"313797035"}], total_rows: 1}, @client.list_tabledata(dataset, table))

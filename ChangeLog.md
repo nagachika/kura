@@ -6,6 +6,8 @@
   because is is not required on multipart upload. `source_uris` and keyworkd argument `file` is exclusive.
 * Kura::Client#load: 4th argument `schema` become keyword argument. It is marked as [Optional] in
   [API Reference](https://cloud.google.com/bigquery/docs/reference/v2/jobs#configuration.load.schema)
+* Kura::Client#query: 1st and 2nd argument `dataset_id`, `table_id` become keyord argument.
+  destinationTable is an [Optional] parameter.
 
 ## Enhancements
 

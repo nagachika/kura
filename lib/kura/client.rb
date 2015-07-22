@@ -162,7 +162,8 @@ module Kura
       end
     end
 
-    def query(dataset_id, table_id, sql, mode: :truncate,
+    def query(sql, mode: :truncate,
+              dataset_id: nil, table_id: nil,
               allow_large_result: true, # for backward compatibility
               allow_large_results: allow_large_result,
               flatten_results: true,
@@ -173,7 +174,6 @@ module Kura
       configuration = {
         query: {
           query: sql,
-          destinationTable: { projectId: @project_id, datasetId: dataset_id, tableId: table_id },
           writeDisposition: write_disposition,
           allowLargeResults: allow_large_results,
           flattenResults: flatten_results,
@@ -181,6 +181,9 @@ module Kura
           useQueryCache: use_query_cache,
         }
       }
+      if dataset_id and table_id
+        configuration[:query][:destinationTable] = { projectId: @project_id, datasetId: dataset_id, tableId: table_id }
+      end
       insert_job(configuration, wait: wait)
     end
 
@@ -270,8 +273,7 @@ module Kura
       r.data
     end
 
-    def job_finished?(job_id)
-      r = job(job_id)
+    def job_finished?(r)
       if r.status.state == "DONE"
         if r.status["errorResult"]
           raise Kura::ApiError.new(r.status.errorResult.reason, r.status.errorResult.message)
@@ -284,11 +286,12 @@ module Kura
     def wait_job(job_id, timeout=60*10)
       expire = Time.now + timeout
       while expire > Time.now
-        if job_finished?(job_id)
-          return true
+        j = job(job_id)
+        if job_finished?(j)
+          return j
         end
         if block_given?
-          yield
+          yield j
         end
         sleep 1
       end
