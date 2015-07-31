@@ -19,6 +19,10 @@ module Kura
       @api = Google::APIClient.new(application_name: "Kura", application_version: Kura::VERSION, authorization: auth)
       @api.authorization.fetch_access_token!
       @bigquery_api = @api.discovered_api("bigquery", "v2")
+
+      if @default_project_id.nil?
+        @default_project_id = self.projects.first.id
+      end
     end
 
     def projects(limit: 1000)
