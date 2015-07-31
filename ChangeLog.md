@@ -1,3 +1,9 @@
+# 0.1.3
+
+## Enhancements
+
+* Add Kura::Client#projects support projects.list API.
+
 # 0.1.2
 
 ## Incompatible Changes

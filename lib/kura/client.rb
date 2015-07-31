@@ -21,6 +21,15 @@ module Kura
       @bigquery_api = @api.discovered_api("bigquery", "v2")
     end
 
+    def projects(limit: 1000)
+      r = @api.execute(api_method: @bigquery_api.projects.list, parameters: { maxResults: limit })
+      unless r.success?
+        error = r.data["error"]["errors"][0]
+        raise Kura::ApiError.new(error["reason"], error["message"])
+      end
+      r.data.projects
+    end
+
     def datasets(project_id: @project_id, all: false, limit: 1000)
       r = @api.execute(api_method: @bigquery_api.datasets.list, parameters: { projectId: project_id, all: all, maxResult: limit })
       unless r.success?
