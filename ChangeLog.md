@@ -3,6 +3,7 @@
 ## Enhancements
 
 * Add Kura::Client#projects support projects.list API.
+* All APIs accept `project_id` keyword argument to override @default_project_id.
 
 # 0.1.2
 

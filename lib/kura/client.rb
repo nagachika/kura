@@ -52,8 +52,8 @@ module Kura
       r.data
     end
 
-    def insert_dataset(dataset_id)
-      r = @api.execute(api_method: @bigquery_api.datasets.insert, parameters: { projectId: @default_project_id }, body_object: { datasetReference: { datasetId: dataset_id } })
+    def insert_dataset(dataset_id, project_id: @default_project_id)
+      r = @api.execute(api_method: @bigquery_api.datasets.insert, parameters: { projectId: project_id }, body_object: { datasetReference: { datasetId: dataset_id } })
       unless r.success?
         error = r.data["error"]["errors"][0]
         raise Kura::ApiError.new(error["reason"], error["message"])
@@ -61,8 +61,8 @@ module Kura
       r.data
     end
 
-    def delete_dataset(dataset_id, delete_contents: false)
-      r = @api.execute(api_method: @bigquery_api.datasets.delete, parameters: { projectId: @default_project_id, datasetId: dataset_id, deleteContents: delete_contents })
+    def delete_dataset(dataset_id, project_id: @default_project_id, delete_contents: false)
+      r = @api.execute(api_method: @bigquery_api.datasets.delete, parameters: { projectId: project_id, datasetId: dataset_id, deleteContents: delete_contents })
       unless r.success?
         error = r.data["error"]["errors"][0]
         raise Kura::ApiError.new(error["reason"], error["message"])
@@ -108,8 +108,8 @@ module Kura
       r.data
     end
 
-    def delete_table(dataset_id, table_id)
-      params = { projectId: @default_project_id, datasetId: dataset_id, tableId: table_id }
+    def delete_table(dataset_id, table_id, project_id: @default_project_id)
+      params = { projectId: project_id, datasetId: dataset_id, tableId: table_id }
       r = @api.execute(api_method: @bigquery_api.tables.delete, parameters: params)
       unless r.success?
         if r.data["error"]["code"] == 404
@@ -153,8 +153,8 @@ module Kura
     end
     private :mode_to_write_disposition
 
-    def insert_job(configuration, media: nil, wait: nil)
-      params = { projectId: @default_project_id }
+    def insert_job(configuration, project_id: @default_project_id, media: nil, wait: nil)
+      params = { projectId: project_id }
       if media
         params["uploadType"] = "multipart"
       end
@@ -165,7 +165,7 @@ module Kura
         raise Kura::ApiError.new(error["reason"], error["message"])
       end
       if wait
-        wait_job(r.data.jobReference.jobId, wait)
+        wait_job(r.data.jobReference.jobId, wait, project_id: project_id)
       else
         r.data.jobReference.jobId
       end
@@ -178,6 +178,8 @@ module Kura
               flatten_results: true,
               priority: "INTERACTIVE",
               use_query_cache: true,
+              project_id: @default_project_id,
+              job_project_id: @default_project_id,
               wait: nil)
       write_disposition = mode_to_write_disposition(mode)
       configuration = {
@@ -191,9 +193,9 @@ module Kura
         }
       }
       if dataset_id and table_id
-        configuration[:query][:destinationTable] = { projectId: @default_project_id, datasetId: dataset_id, tableId: table_id }
+        configuration[:query][:destinationTable] = { projectId: project_id, datasetId: dataset_id, tableId: table_id }
       end
-      insert_job(configuration, wait: wait)
+      insert_job(configuration, wait: wait, project_id: job_project_id)
     end
 
     def load(dataset_id, table_id, source_uris=nil,
@@ -203,13 +205,15 @@ module Kura
              allow_quoted_newlines: false,
              quote: '"', skip_leading_rows: 0,
              source_format: "CSV",
+             project_id: @default_project_id,
+             job_project_id: @default_project_id,
              file: nil, wait: nil)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
       configuration = {
         load: {
           destinationTable: {
-            projectId: @default_project_id,
+            projectId: project_id,
             datasetId: dataset_id,
             tableId: table_id,
           },
@@ -234,7 +238,7 @@ module Kura
       else
         configuration[:load][:sourceUris] = source_uris
       end
-      insert_job(configuration, media: file, wait: wait)
+      insert_job(configuration, media: file, wait: wait, project_id: job_project_id)
     end
 
     def extract(dataset_id, table_id, dest_uris,
@@ -242,6 +246,8 @@ module Kura
                 destination_format: "CSV",
                 field_delimiter: ",",
                 print_header: true,
+                project_id: @default_project_id,
+                job_project_id: @default_project_id,
                 wait: nil)
       dest_uris = [ dest_uris ] if dest_uris.is_a?(String)
       configuration = {
@@ -249,7 +255,7 @@ module Kura
           compression: compression,
           destinationFormat: destination_format,
           sourceTable: {
-            projectId: @default_project_id,
+            projectId: project_id,
             datasetId: dataset_id,
             tableId: table_id,
           },
@@ -260,31 +266,36 @@ module Kura
         configuration[:extract][:fieldDelimiter] = field_delimiter
         configuration[:extract][:printHeader] = print_header
       end
-      insert_job(configuration, wait: wait)
+      insert_job(configuration, wait: wait, project_id: job_project_id)
     end
 
-    def copy(src_dataset_id, src_table_id, dest_dataset_id, dest_table_id, mode: :truncate, wait: nil)
+    def copy(src_dataset_id, src_table_id, dest_dataset_id, dest_table_id,
+             mode: :truncate,
+             src_project_id: @default_project_id,
+             dest_project_id: @default_project_id,
+             job_project_id: @default_project_id,
+             wait: nil)
       write_disposition = mode_to_write_disposition(mode)
       configuration = {
         copy: {
           destinationTable: {
-            projectId: @default_project_id,
+            projectId: dest_project_id,
             datasetId: dest_dataset_id,
             tableId: dest_table_id,
           },
           sourceTable: {
-            projectId: @default_project_id,
+            projectId: src_project_id,
             datasetId: src_dataset_id,
             tableId: src_table_id,
           },
           writeDisposition: write_disposition,
         }
       }
-      insert_job(configuration, wait: wait)
+      insert_job(configuration, wait: wait, project_id: job_project_id)
     end
 
-    def job(job_id)
-      params = { projectId: @default_project_id, jobId: job_id }
+    def job(job_id, project_id: @default_project_id)
+      params = { projectId: project_id, jobId: job_id }
       r = @api.execute(api_method: @bigquery_api.jobs.get, parameters: params)
       unless r.success?
         error = r.data["error"]["errors"][0]
@@ -303,10 +314,10 @@ module Kura
       return false
     end
 
-    def wait_job(job_id, timeout=60*10)
+    def wait_job(job_id, timeout=60*10, project_id: @default_project_id)
       expire = Time.now + timeout
       while expire > Time.now
-        j = job(job_id)
+        j = job(job_id, project_id: project_id)
         if job_finished?(j)
           return j
         end
