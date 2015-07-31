@@ -6,7 +6,7 @@ require "kura/version"
 module Kura
   class Client
     def initialize(project_id, email_address, private_key)
-      @project_id = project_id
+      @default_project_id = project_id
       @scope = "https://www.googleapis.com/auth/bigquery"
       @email_address = email_address
       @private_key = private_key
@@ -30,7 +30,7 @@ module Kura
       r.data.projects
     end
 
-    def datasets(project_id: @project_id, all: false, limit: 1000)
+    def datasets(project_id: @default_project_id, all: false, limit: 1000)
       r = @api.execute(api_method: @bigquery_api.datasets.list, parameters: { projectId: project_id, all: all, maxResult: limit })
       unless r.success?
         error = r.data["error"]["errors"][0]
@@ -39,7 +39,7 @@ module Kura
       r.data.datasets
     end
 
-    def dataset(dataset_id, project_id: @project_id)
+    def dataset(dataset_id, project_id: @default_project_id)
       r = @api.execute(api_method: @bigquery_api.datasets.get, parameters: { projectId: project_id, datasetId: dataset_id })
       unless r.success?
         if r.data.error["code"] == 404
@@ -53,7 +53,7 @@ module Kura
     end
 
     def insert_dataset(dataset_id)
-      r = @api.execute(api_method: @bigquery_api.datasets.insert, parameters: { projectId: @project_id }, body_object: { datasetReference: { datasetId: dataset_id } })
+      r = @api.execute(api_method: @bigquery_api.datasets.insert, parameters: { projectId: @default_project_id }, body_object: { datasetReference: { datasetId: dataset_id } })
       unless r.success?
         error = r.data["error"]["errors"][0]
         raise Kura::ApiError.new(error["reason"], error["message"])
@@ -62,7 +62,7 @@ module Kura
     end
 
     def delete_dataset(dataset_id, delete_contents: false)
-      r = @api.execute(api_method: @bigquery_api.datasets.delete, parameters: { projectId: @project_id, datasetId: dataset_id, deleteContents: delete_contents })
+      r = @api.execute(api_method: @bigquery_api.datasets.delete, parameters: { projectId: @default_project_id, datasetId: dataset_id, deleteContents: delete_contents })
       unless r.success?
         error = r.data["error"]["errors"][0]
         raise Kura::ApiError.new(error["reason"], error["message"])
@@ -70,7 +70,7 @@ module Kura
       r.data
     end
 
-    def patch_dataset(dataset_id, project_id: @project_id, access: nil, description: nil, default_table_expiration_ms: nil, friendly_name: nil )
+    def patch_dataset(dataset_id, project_id: @default_project_id, access: nil, description: nil, default_table_expiration_ms: nil, friendly_name: nil )
       body = {}
       body["access"] = access if access
       body["defaultTableExpirationMs"] = default_table_expiration_ms if default_table_expiration_ms
@@ -84,7 +84,7 @@ module Kura
       r.data
     end
 
-    def tables(dataset_id, project_id: @project_id, limit: 1000)
+    def tables(dataset_id, project_id: @default_project_id, limit: 1000)
       params = { projectId: project_id, datasetId: dataset_id, maxResult: limit }
       r = @api.execute(api_method: @bigquery_api.tables.list, parameters: params)
       unless r.success?
@@ -94,7 +94,7 @@ module Kura
       r.data.tables
     end
 
-    def table(dataset_id, table_id, project_id: @project_id)
+    def table(dataset_id, table_id, project_id: @default_project_id)
       params = { projectId: project_id, datasetId: dataset_id, tableId: table_id }
       r = @api.execute(api_method: @bigquery_api.tables.get, parameters: params)
       unless r.success?
@@ -109,7 +109,7 @@ module Kura
     end
 
     def delete_table(dataset_id, table_id)
-      params = { projectId: @project_id, datasetId: dataset_id, tableId: table_id }
+      params = { projectId: @default_project_id, datasetId: dataset_id, tableId: table_id }
       r = @api.execute(api_method: @bigquery_api.tables.delete, parameters: params)
       unless r.success?
         if r.data["error"]["code"] == 404
@@ -122,7 +122,7 @@ module Kura
       r.data
     end
 
-    def list_tabledata(dataset_id, table_id, project_id: @project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil)
+    def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil)
       schema ||= table(dataset_id, table_id, project_id: project_id).schema.fields
       field_names = schema.map{|f| f["name"] }
       params = { projectId: project_id, datasetId: dataset_id, tableId: table_id, maxResults: max_result }
@@ -154,7 +154,7 @@ module Kura
     private :mode_to_write_disposition
 
     def insert_job(configuration, media: nil, wait: nil)
-      params = { projectId: @project_id }
+      params = { projectId: @default_project_id }
       if media
         params["uploadType"] = "multipart"
       end
@@ -191,7 +191,7 @@ module Kura
         }
       }
       if dataset_id and table_id
-        configuration[:query][:destinationTable] = { projectId: @project_id, datasetId: dataset_id, tableId: table_id }
+        configuration[:query][:destinationTable] = { projectId: @default_project_id, datasetId: dataset_id, tableId: table_id }
       end
       insert_job(configuration, wait: wait)
     end
@@ -209,7 +209,7 @@ module Kura
       configuration = {
         load: {
           destinationTable: {
-            projectId: @project_id,
+            projectId: @default_project_id,
             datasetId: dataset_id,
             tableId: table_id,
           },
@@ -249,7 +249,7 @@ module Kura
           compression: compression,
           destinationFormat: destination_format,
           sourceTable: {
-            projectId: @project_id,
+            projectId: @default_project_id,
             datasetId: dataset_id,
             tableId: table_id,
           },
@@ -268,12 +268,12 @@ module Kura
       configuration = {
         copy: {
           destinationTable: {
-            projectId: @project_id,
+            projectId: @default_project_id,
             datasetId: dest_dataset_id,
             tableId: dest_table_id,
           },
           sourceTable: {
-            projectId: @project_id,
+            projectId: @default_project_id,
             datasetId: src_dataset_id,
             tableId: src_table_id,
           },
@@ -284,7 +284,7 @@ module Kura
     end
 
     def job(job_id)
-      params = { projectId: @project_id, jobId: job_id }
+      params = { projectId: @default_project_id, jobId: job_id }
       r = @api.execute(api_method: @bigquery_api.jobs.get, parameters: params)
       unless r.success?
         error = r.data["error"]["errors"][0]
