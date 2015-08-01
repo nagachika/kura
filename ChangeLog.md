@@ -1,3 +1,9 @@
+# 0.2.0
+
+## Enhancements
+
+* Support authentication with GCE bigquery scope.
+
 # 0.1.3
 
 ## Enhancements

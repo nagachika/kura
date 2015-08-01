@@ -21,11 +21,23 @@ Or install it yourself as:
 
 ## Usage
 
+### Initialize
+
 ```
+# a. With Service Account Private Key
 client = Kura.client(project_id, email, private_key)
+
+# b. With GCE bigquery scope (Only available on Google Compute Engine instance)
+client = Kura.client
+```
+
+### Job API
+
+```
 client.load("dataset", "table", "gs://mybucket/data.csv", wait: 120)
-client.query("SELECT * FROM [dataset.table];", wait: 120)
+client.query("SELECT * FROM [dataset.table];", dataset_id: "dest_dataset", table_id: dest_table", wait: 120)
 client.extract("dataset", "result", "gs://mybucket/extracted.csv", wait: 120)
+client.copy("src_dataset", "src_table", "dest_dataset", "dest_table", wait: 120)
 ```
 
 ## Contributing

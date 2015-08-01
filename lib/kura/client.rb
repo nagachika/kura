@@ -5,17 +5,21 @@ require "kura/version"
 
 module Kura
   class Client
-    def initialize(project_id, email_address, private_key)
-      @default_project_id = project_id
+    def initialize(default_project_id: nil, email_address: nil, private_key: nil)
+      @default_project_id = default_project_id
       @scope = "https://www.googleapis.com/auth/bigquery"
       @email_address = email_address
       @private_key = private_key
-      auth = Signet::OAuth2::Client.new(
-        token_credential_uri: "https://accounts.google.com/o/oauth2/token",
-        audience: "https://accounts.google.com/o/oauth2/token",
-        scope: @scope,
-        issuer: @email_address,
-        signing_key: @private_key)
+      if @email_address and @private_key
+        auth = Signet::OAuth2::Client.new(
+          token_credential_uri: "https://accounts.google.com/o/oauth2/token",
+          audience: "https://accounts.google.com/o/oauth2/token",
+          scope: @scope,
+          issuer: @email_address,
+          signing_key: @private_key)
+      else
+        auth = Google::APIClient::ComputeServiceAccount.new
+      end
       @api = Google::APIClient.new(application_name: "Kura", application_version: Kura::VERSION, authorization: auth)
       @api.authorization.fetch_access_token!
       @bigquery_api = @api.discovered_api("bigquery", "v2")
