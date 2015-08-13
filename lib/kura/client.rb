@@ -5,7 +5,7 @@ require "kura/version"
 
 module Kura
   class Client
-    def initialize(default_project_id: nil, email_address: nil, private_key: nil)
+    def initialize(default_project_id: nil, email_address: nil, private_key: nil, http_options: {open_timeout: 60})
       @default_project_id = default_project_id
       @scope = "https://www.googleapis.com/auth/bigquery"
       @email_address = email_address
@@ -20,7 +20,7 @@ module Kura
       else
         auth = Google::APIClient::ComputeServiceAccount.new
       end
-      @api = Google::APIClient.new(application_name: "Kura", application_version: Kura::VERSION, authorization: auth)
+      @api = Google::APIClient.new(application_name: "Kura", application_version: Kura::VERSION, authorization: auth, faraday_option: http_options)
       @api.authorization.fetch_access_token!
       @bigquery_api = @api.discovered_api("bigquery", "v2")
 

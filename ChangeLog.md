@@ -1,3 +1,14 @@
+# 0.1.5
+
+## Enhancements
+
+* Support :http_options to pass Faraday connection.
+  And set :open_timeout to 60 as default settings.
+
+## Fixes
+
+* Get rid of hang up at HTTP connection by set :open_timeout.
+
 # 0.1.4
 
 ## Enhancements

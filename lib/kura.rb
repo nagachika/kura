@@ -34,10 +34,10 @@ module Kura
     private_key
   end
 
-  def self.client(project_id=nil, email_address=nil, private_key=nil)
+  def self.client(project_id=nil, email_address=nil, private_key=nil, http_options: {open_timeout: 60})
     if private_key
       private_key = get_private_key(private_key)
     end
-    self::Client.new(default_project_id: project_id, email_address: email_address, private_key: private_key)
+    self::Client.new(default_project_id: project_id, email_address: email_address, private_key: private_key, http_options: http_options)
   end
 end
