@@ -26,24 +26,24 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
     @client.insert_dataset(@name)
     dataset = @client.dataset(@name)
-    assert_equal(@project_id, dataset.datasetReference.projectId)
-    assert_equal(@name, dataset.datasetReference.datasetId)
+    assert_equal(@project_id, dataset.dataset_reference.project_id)
+    assert_equal(@name, dataset.dataset_reference.dataset_id)
 
     power_assert do
       @client.datasets.map(&:id).include?("#{@project_id}:#{@name}")
     end
 
-    access = @client.dataset(@name).access.map(&:to_hash)
+    access = @client.dataset(@name).access.map(&:to_h)
     access << {
-      "role" => "READER",
-      "domain" => "example.com",
+      role: "READER",
+      domain: "example.com",
     }
     @client.patch_dataset(@name, access: access, description: "Description#1", default_table_expiration_ms: 3_600_000, friendly_name: "FriendlyName#1")
     @client.dataset(@name).tap do |d|
-      assert_equal(access, d.access.map(&:to_hash))
+      assert_equal(access, d.access.map(&:to_h))
       assert_equal("Description#1", d.description)
-      assert_equal(3_600_000, d.defaultTableExpirationMs)
-      assert_equal("FriendlyName#1", d.friendlyName)
+      assert_equal("FriendlyName#1", d.friendly_name)
+      assert_equal(3_600_000, d.default_table_expiration_ms.to_i)
     end
 
     @client.delete_dataset(@name)
@@ -69,6 +69,8 @@ class KuraIntegrationTest < Test::Unit::TestCase
     err = assert_raise(Kura::ApiError) { @client.patch_dataset("invalid:dataset", description: "dummy") }
     assert_equal("invalid", err.reason)
     assert_match(/invalid:dataset/, err.message)
+  ensure
+    @client.delete_dataset(@name) rescue nil
   end
 
   def test_tables
@@ -95,7 +97,9 @@ class KuraIntegrationTest < Test::Unit::TestCase
   def test_table
     assert_nil(@client.table("_dummy", "nonexist"))
     @client.table("samples", "github_timeline", project_id: "publicdata").tap do |tbl|
-      assert_equal({"projectId"=>"publicdata", "datasetId"=>"samples", "tableId"=>"github_timeline"}, tbl.tableReference.to_hash)
+      assert_equal(tbl.table_reference.project_id, "publicdata")
+      assert_equal(tbl.table_reference.dataset_id, "samples")
+      assert_equal(tbl.table_reference.table_id, "github_timeline")
       assert_equal("TABLE", tbl.type)
     end
 

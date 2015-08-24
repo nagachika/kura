@@ -1,11 +1,12 @@
 # coding: utf-8
 
-require "google/api_client"
+require "google/apis/bigquery_v2"
+require "googleauth"
 require "kura/version"
 
 module Kura
   class Client
-    def initialize(default_project_id: nil, email_address: nil, private_key: nil, http_options: {open_timeout: 60})
+    def initialize(default_project_id: nil, email_address: nil, private_key: nil, http_options: {timeout: 60}, default_retries: 5)
       @default_project_id = default_project_id
       @scope = "https://www.googleapis.com/auth/bigquery"
       @email_address = email_address
@@ -17,140 +18,116 @@ module Kura
           scope: @scope,
           issuer: @email_address,
           signing_key: @private_key)
+        # MEMO: signet-0.6.1 depend on Farady.default_connection
+        Faraday.default_connection.options.timeout = 60
+        auth.fetch_access_token!
       else
-        auth = Google::APIClient::ComputeServiceAccount.new
+        auth = Google::Auth.get_application_default([@scope])
+        auth.fetch_access_token!
       end
-      @api = Google::APIClient.new(application_name: "Kura", application_version: Kura::VERSION, authorization: auth, faraday_option: http_options)
-      @api.authorization.fetch_access_token!
-      @bigquery_api = @api.discovered_api("bigquery", "v2")
+      Google::Apis::RequestOptions.default.retries = default_retries
+      Google::Apis::RequestOptions.default.timeout_sec = http_options[:timeout]
+      @api = Google::Apis::BigqueryV2::BigqueryService.new
+      @api.authorization = auth
 
       if @default_project_id.nil?
         @default_project_id = self.projects.first.id
       end
     end
 
-    def projects(limit: 1000)
-      r = @api.execute(api_method: @bigquery_api.projects.list, parameters: { maxResults: limit })
-      unless r.success?
-        error = r.data["error"]["errors"][0]
+    def process_error(err)
+      if err.respond_to?(:body)
+        jobj = JSON.parse(err.body)
+        error = jobj["error"]
+        error = error["errors"][0]
         raise Kura::ApiError.new(error["reason"], error["message"])
+      else
+        raise err
       end
-      r.data.projects
+    end
+    private :process_error
+
+    def projects(limit: 1000)
+      result = @api.list_projects(max_results: limit)
+      result.projects
+    rescue
+      process_error($!)
     end
 
     def datasets(project_id: @default_project_id, all: false, limit: 1000)
-      r = @api.execute(api_method: @bigquery_api.datasets.list, parameters: { projectId: project_id, all: all, maxResult: limit })
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
-      r.data.datasets
+      result = @api.list_datasets(project_id, all: all, max_results: limit)
+      result.datasets
+    rescue
+      process_error($!)
     end
 
     def dataset(dataset_id, project_id: @default_project_id)
-      r = @api.execute(api_method: @bigquery_api.datasets.get, parameters: { projectId: project_id, datasetId: dataset_id })
-      unless r.success?
-        if r.data.error["code"] == 404
-          return nil
-        else
-          error = r.data["error"]["errors"][0]
-          raise Kura::ApiError.new(error["reason"], error["message"])
-        end
-      end
-      r.data
+      @api.get_dataset(project_id, dataset_id)
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
     end
 
     def insert_dataset(dataset_id, project_id: @default_project_id)
-      r = @api.execute(api_method: @bigquery_api.datasets.insert, parameters: { projectId: project_id }, body_object: { datasetReference: { datasetId: dataset_id } })
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
-      r.data
+      obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
+      @api.insert_dataset(project_id, obj)
+    rescue
+      process_error($!)
     end
 
     def delete_dataset(dataset_id, project_id: @default_project_id, delete_contents: false)
-      r = @api.execute(api_method: @bigquery_api.datasets.delete, parameters: { projectId: project_id, datasetId: dataset_id, deleteContents: delete_contents })
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
-      r.data
+      @api.delete_dataset(project_id, dataset_id, delete_contents: delete_contents)
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
     end
 
     def patch_dataset(dataset_id, project_id: @default_project_id, access: nil, description: nil, default_table_expiration_ms: nil, friendly_name: nil )
-      body = {}
-      body["access"] = access if access
-      body["defaultTableExpirationMs"] = default_table_expiration_ms if default_table_expiration_ms
-      body["description"] = description if description
-      body["friendlyName"] = friendly_name if friendly_name
-      r = @api.execute(api_method: @bigquery_api.datasets.patch, parameters: { projectId: project_id, datasetId: dataset_id }, body_object: body)
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
-      r.data
+      obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
+      obj.access = access if access
+      obj.default_table_expiration_ms = default_table_expiration_ms if default_table_expiration_ms
+      obj.description = description if description
+      obj.friendly_name = friendly_name if friendly_name
+      @api.patch_dataset(project_id, dataset_id, obj)
+    rescue
+      process_error($!)
     end
 
     def tables(dataset_id, project_id: @default_project_id, limit: 1000)
-      params = { projectId: project_id, datasetId: dataset_id, maxResult: limit }
-      r = @api.execute(api_method: @bigquery_api.tables.list, parameters: params)
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
-      r.data.tables
+      result = @api.list_tables(project_id, dataset_id, max_results: limit)
+      result.tables
+    rescue
+      process_error($!)
     end
 
     def table(dataset_id, table_id, project_id: @default_project_id)
-      params = { projectId: project_id, datasetId: dataset_id, tableId: table_id }
-      r = @api.execute(api_method: @bigquery_api.tables.get, parameters: params)
-      unless r.success?
-        if r.data["error"]["code"] == 404
-          return nil
-        else
-          error = r.data["error"]["errors"][0]
-          raise Kura::ApiError.new(error["reason"], error["message"])
-        end
-      end
-      r.data
+      @api.get_table(project_id, dataset_id, table_id)
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
     end
 
     def delete_table(dataset_id, table_id, project_id: @default_project_id)
-      params = { projectId: project_id, datasetId: dataset_id, tableId: table_id }
-      r = @api.execute(api_method: @bigquery_api.tables.delete, parameters: params)
-      unless r.success?
-        if r.data["error"]["code"] == 404
-          return nil
-        else
-          error = r.data["error"]["errors"][0]
-          raise Kura::ApiError.new(error["reason"], error["message"])
-        end
-      end
-      r.data
+      @api.delete_table(project_id, dataset_id, table_id)
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
     end
 
     def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil)
       schema ||= table(dataset_id, table_id, project_id: project_id).schema.fields
-      field_names = schema.map{|f| f["name"] }
-      params = { projectId: project_id, datasetId: dataset_id, tableId: table_id, maxResults: max_result }
-      if page_token
-        params[:pageToken] = page_token
-      else
-        params[:startIndex] = start_index
-      end
-      r = @api.execute(api_method: @bigquery_api.tabledata.list, parameters: params)
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
+      field_names = schema.map{|f| f.respond_to?(:[]) ? (f["name"] || f[:name]) : f.name }
+
+      r = @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token)
       {
-        total_rows: r.data.totalRows,
-        next_token: r.data["pageToken"],
-        rows: r.data.rows.map do |row|
+        total_rows: r.total_rows.to_i,
+        next_token: r.page_token,
+        rows: r.rows.map do |row|
           row.f.zip(field_names).each_with_object({}) do |(v, fn), tbl| tbl[fn] = v.v end
         end
       }
+    rescue
+      process_error($!)
     end
 
     def mode_to_write_disposition(mode)
@@ -162,21 +139,17 @@ module Kura
     private :mode_to_write_disposition
 
     def insert_job(configuration, project_id: @default_project_id, media: nil, wait: nil)
-      params = { projectId: project_id }
-      if media
-        params["uploadType"] = "multipart"
-      end
-      body = { configuration: configuration }
-      r = @api.execute(api_method: @bigquery_api.jobs.insert, parameters: params, body_object: body, media: media)
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
+      job_object = Google::Apis::BigqueryV2::Job.new
+      job_object.configuration = configuration
+      result = @api.insert_job(project_id, job_object, upload_source: media)
+      job_id = result.job_reference.job_id
       if wait
-        wait_job(r.data.jobReference.jobId, wait, project_id: project_id)
+        wait_job(job_id, wait, project_id: project_id)
       else
-        r.data.jobReference.jobId
+        job_id
       end
+    rescue
+      process_error($!)
     end
 
     def query(sql, mode: :truncate,
@@ -193,15 +166,15 @@ module Kura
       configuration = {
         query: {
           query: sql,
-          writeDisposition: write_disposition,
-          allowLargeResults: allow_large_results,
-          flattenResults: flatten_results,
+          write_disposition: write_disposition,
+          allow_large_results: allow_large_results,
+          flatten_results: flatten_results,
           priority: priority,
-          useQueryCache: use_query_cache,
+          use_query_cache: use_query_cache,
         }
       }
       if dataset_id and table_id
-        configuration[:query][:destinationTable] = { projectId: project_id, datasetId: dataset_id, tableId: table_id }
+        configuration[:query][:destination_table] = { project_id: project_id, dataset_id: dataset_id, table_id: table_id }
       end
       insert_job(configuration, wait: wait, project_id: job_project_id)
     end
@@ -220,31 +193,29 @@ module Kura
       source_uris = [source_uris] if source_uris.is_a?(String)
       configuration = {
         load: {
-          destinationTable: {
-            projectId: project_id,
-            datasetId: dataset_id,
-            tableId: table_id,
+          destination_table: {
+            project_id: project_id,
+            dataset_id: dataset_id,
+            table_id: table_id,
           },
-          writeDisposition: write_disposition,
-          allowJaggedRows: allow_jagged_rows,
-          maxBadRecords: max_bad_records,
-          ignoreUnknownValues: ignore_unknown_values,
-          sourceFormat: source_format,
+          write_disposition: write_disposition,
+          allow_jagged_rows: allow_jagged_rows,
+          max_bad_records: max_bad_records,
+          ignore_unknown_values: ignore_unknown_values,
+          source_format: source_format,
         }
       }
       if schema
         configuration[:load][:schema] = { fields: schema }
       end
       if source_format == "CSV"
-        configuration[:load][:fieldDelimiter] = field_delimiter
-        configuration[:load][:allowQuotedNewlines] = allow_quoted_newlines
+        configuration[:load][:field_delimiter] = field_delimiter
+        configuration[:load][:allow_quoted_newlines] = allow_quoted_newlines
         configuration[:load][:quote] = quote
-        configuration[:load][:skipLeadingRows] = skip_leading_rows
+        configuration[:load][:skip_leading_rows] = skip_leading_rows
       end
-      if file
-        file = Google::APIClient::UploadIO.new(file, "application/octet-stream")
-      else
-        configuration[:load][:sourceUris] = source_uris
+      unless file
+        configuration[:load][:source_uris] = source_uris
       end
       insert_job(configuration, media: file, wait: wait, project_id: job_project_id)
     end
@@ -261,18 +232,18 @@ module Kura
       configuration = {
         extract: {
           compression: compression,
-          destinationFormat: destination_format,
-          sourceTable: {
-            projectId: project_id,
-            datasetId: dataset_id,
-            tableId: table_id,
+          destination_format: destination_format,
+          source_table: {
+            project_id: project_id,
+            dataset_id: dataset_id,
+            table_id: table_id,
           },
-          destinationUris: dest_uris,
+          destination_uris: dest_uris,
         }
       }
       if destination_format == "CSV"
-        configuration[:extract][:fieldDelimiter] = field_delimiter
-        configuration[:extract][:printHeader] = print_header
+        configuration[:extract][:field_delimiter] = field_delimiter
+        configuration[:extract][:print_header] = print_header
       end
       insert_job(configuration, wait: wait, project_id: job_project_id)
     end
@@ -286,36 +257,32 @@ module Kura
       write_disposition = mode_to_write_disposition(mode)
       configuration = {
         copy: {
-          destinationTable: {
-            projectId: dest_project_id,
-            datasetId: dest_dataset_id,
-            tableId: dest_table_id,
+          destination_table: {
+            project_id: dest_project_id,
+            dataset_id: dest_dataset_id,
+            table_id: dest_table_id,
           },
-          sourceTable: {
-            projectId: src_project_id,
-            datasetId: src_dataset_id,
-            tableId: src_table_id,
+          source_table: {
+            project_id: src_project_id,
+            dataset_id: src_dataset_id,
+            table_id: src_table_id,
           },
-          writeDisposition: write_disposition,
+          write_disposition: write_disposition,
         }
       }
       insert_job(configuration, wait: wait, project_id: job_project_id)
     end
 
     def job(job_id, project_id: @default_project_id)
-      params = { projectId: project_id, jobId: job_id }
-      r = @api.execute(api_method: @bigquery_api.jobs.get, parameters: params)
-      unless r.success?
-        error = r.data["error"]["errors"][0]
-        raise Kura::ApiError.new(error["reason"], error["message"])
-      end
-      r.data
+      @api.get_job(project_id, job_id)
+    rescue
+      process_error($!)
     end
 
     def job_finished?(r)
       if r.status.state == "DONE"
-        if r.status["errorResult"]
-          raise Kura::ApiError.new(r.status.errorResult.reason, r.status.errorResult.message)
+        if r.status.error_result
+          raise Kura::ApiError.new(r.status.error_result.reason, r.status.error_result.message)
         end
         return true
       end
