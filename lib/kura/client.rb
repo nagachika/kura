@@ -179,6 +179,32 @@ module Kura
       insert_job(configuration, wait: wait, project_id: job_project_id)
     end
 
+    def normalize_schema(schema)
+      schema.map do |s|
+        if s.respond_to?(:[])
+          f = {
+            name: (s[:name] || s["name"]),
+            type: (s[:type] || s["type"]),
+            mode: (s[:mode] || s["mode"]),
+          }
+          if (sub_fields = (s[:fields] || s["fields"]))
+            f[:fields] = normalize_schema(sub_fields)
+          end
+        else
+          f = {
+            name: s.name,
+            type: s.type,
+            mode: s.mode,
+          }
+          if (sub_fields = f.fields)
+            f[:fields] = normalize_schema(sub_fields)
+          end
+        end
+        f
+      end
+    end
+    private :normalize_schema
+
     def load(dataset_id, table_id, source_uris=nil,
              schema: nil, delimiter: ",", field_delimiter: delimiter, mode: :append,
              allow_jagged_rows: false, max_bad_records: 0,
@@ -206,7 +232,7 @@ module Kura
         }
       }
       if schema
-        configuration[:load][:schema] = { fields: schema }
+        configuration[:load][:schema] = { fields: normalize_schema(schema) }
       end
       if source_format == "CSV"
         configuration[:load][:field_delimiter] = field_delimiter
