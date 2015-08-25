@@ -1,3 +1,7 @@
+# 0.2.0
+
+* Use google-api-client-0.9.3.pre3.
+
 # 0.1.5
 
 ## Enhancements
