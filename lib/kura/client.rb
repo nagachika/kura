@@ -107,6 +107,31 @@ module Kura
       process_error($!)
     end
 
+    def insert_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: nil,
+                     friendly_name: nil, schema: nil, description: nil,
+                     query: nil, external_data_configuration: nil)
+      if expiration_time
+        expiration_time = (expiration_time.to_f * 1000.0).to_i
+      end
+      if query
+        view = { query: query }
+      elsif external_data_configuration
+      elsif schema
+        schema = { fields: normalize_schema(schema) }
+      end
+      table = Google::Apis::BigqueryV2::Table.new(
+        table_reference: {project_id: project_id, dataset_id: dataset_id, table_id: table_id},
+        friendly_name: friendly_name,
+        description: description,
+        schema: schema,
+        expiration_time: expiration_time,
+        view: view,
+        external_data_configuration: external_data_configuration)
+      @api.insert_table(project_id, dataset_id, table)
+    rescue
+      process_error($!)
+    end
+
     def delete_table(dataset_id, table_id, project_id: @default_project_id)
       @api.delete_table(project_id, dataset_id, table_id)
     rescue

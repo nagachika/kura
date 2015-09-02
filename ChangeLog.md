@@ -1,3 +1,9 @@
+# 0.2.1
+
+## Enhancements
+
+* Add Kura::Client#insert_table. Support tables.insert API.
+
 # 0.2.0
 
 * Use google-api-client-0.9.3.pre3.

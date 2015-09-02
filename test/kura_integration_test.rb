@@ -110,6 +110,62 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_match(/invalid:dataset/, err.message)
   end
 
+  def test_insert_table
+    dataset = "_Kura_test"
+    table = "insert_table"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    power_assert do
+      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}], friendly_name: "friend", description: "enemy")
+    end
+    t = @client.table(dataset, table)
+    power_assert do
+      t.table_reference.dataset_id == dataset
+    end
+    power_assert do
+      t.table_reference.table_id == table
+    end
+    power_assert do
+      t.friendly_name == "friend"
+    end
+    power_assert do
+      t.description == "enemy"
+    end
+    power_assert do
+      t.type == "TABLE"
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_insert_table_view
+    dataset = "_Kura_test"
+    table = "insert_table"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    query = "SELECT COUNT(*) FROM [publicdata:samples.wikipedia];"
+    power_assert do
+      @client.insert_table(dataset, table, query: query)
+    end
+    t = @client.table(dataset, table)
+    power_assert do
+      t.table_reference.dataset_id == dataset
+    end
+    power_assert do
+      t.table_reference.table_id == table
+    end
+    power_assert do
+      t.view.query == query
+    end
+    power_assert do
+      t.type == "VIEW"
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_delete_table
     assert_nil(@client.delete_table("_dummy", "nonexist"))
     err = assert_raise(Kura::ApiError) do
