@@ -166,6 +166,45 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_patch_table
+    dataset = "_Kura_test"
+    table = "patch_table"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    @client.insert_table(dataset, table)
+    expiration = (Time.now + 3600).to_f
+    expiration_ms = (expiration * 1000).to_i
+    power_assert do
+      @client.patch_table(dataset, table, friendly_name: "friend", description: "enemy", expiration_time: expiration)
+    end
+    t = @client.table(dataset, table)
+    power_assert do
+      t.friendly_name == "friend"
+    end
+    power_assert do
+      t.description == "enemy"
+    end
+    power_assert do
+      t.expiration_time.to_i == expiration_ms
+    end
+    power_assert do
+      @client.patch_table(dataset, table, friendly_name: nil ,description: nil, expiration_time: nil)
+    end
+    t = @client.table(dataset, table)
+    power_assert do
+      t.friendly_name == nil
+    end
+    power_assert do
+      t.description == nil
+    end
+    power_assert do
+      t.expiration_time == nil
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_delete_table
     assert_nil(@client.delete_table("_dummy", "nonexist"))
     err = assert_raise(Kura::ApiError) do

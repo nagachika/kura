@@ -3,6 +3,12 @@
 ## Enhancements
 
 * Add Kura::Client#insert_table. Support tables.insert API.
+* Add Kura::Client#patch_table. Support tables.patch API.
+
+## Fixes
+
+* Kura::Client#patch_dataset is now able to reset fiendly_name, description,
+  default_expiration_ms by nil.
 
 # 0.2.0
 

@@ -82,12 +82,12 @@ module Kura
       process_error($!)
     end
 
-    def patch_dataset(dataset_id, project_id: @default_project_id, access: nil, description: nil, default_table_expiration_ms: nil, friendly_name: nil )
+    def patch_dataset(dataset_id, project_id: @default_project_id, access: nil, description: :na, default_table_expiration_ms: :na, friendly_name: :na )
       obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
       obj.access = access if access
-      obj.default_table_expiration_ms = default_table_expiration_ms if default_table_expiration_ms
-      obj.description = description if description
-      obj.friendly_name = friendly_name if friendly_name
+      obj.default_table_expiration_ms = default_table_expiration_ms if default_table_expiration_ms != :na
+      obj.description = description if description != :na
+      obj.friendly_name = friendly_name if friendly_name != :na
       @api.patch_dataset(project_id, dataset_id, obj)
     rescue
       process_error($!)
@@ -128,6 +128,19 @@ module Kura
         view: view,
         external_data_configuration: external_data_configuration)
       @api.insert_table(project_id, dataset_id, table)
+    rescue
+      process_error($!)
+    end
+
+    def patch_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: :na, friendly_name: :na, description: :na)
+      if expiration_time != :na and not(expiration_time.nil?)
+        expiration_time = (expiration_time.to_f * 1000.0).to_i
+      end
+      table = Google::Apis::BigqueryV2::Table.new(table_reference: {project_id: project_id, dataset_id: dataset_id, table_id: table_id})
+      table.friendly_name = friendly_name if friendly_name != :na
+      table.description = description if description != :na
+      table.expiration_time = expiration_time if expiration_time != :na
+      @api.patch_table(project_id, dataset_id, table_id, table)
     rescue
       process_error($!)
     end
