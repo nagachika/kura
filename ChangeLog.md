@@ -1,3 +1,10 @@
+# 0.2.2
+
+## Enhancements
+
+* Add Kura::Client#cancel_job. Support jobs.cancel API.
+  https://cloud.google.com/bigquery/docs/reference/v2/jobs/cancel
+
 # 0.2.1
 
 ## Enhancements

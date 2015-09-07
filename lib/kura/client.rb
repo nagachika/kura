@@ -343,6 +343,17 @@ module Kura
       process_error($!)
     end
 
+    def cancel_job(job, project_id: @default_project_id)
+      case job
+      when String
+        jobid = job
+      when Google::Apis::BigqueryV2::Job
+        project_id = job.job_reference.project_id
+        jobid = job.job_reference.job_id
+      end
+      @api.cancel_job(project_id, jobid).job
+    end
+
     def job_finished?(r)
       if r.status.state == "DONE"
         if r.status.error_result

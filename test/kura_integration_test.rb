@@ -302,4 +302,19 @@ class KuraIntegrationTest < Test::Unit::TestCase
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
   end
+
+  def test_cancel_job
+    jobid = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
+    job = @client.cancel_job(jobid)
+    power_assert do
+      # Sometimes jobs.cancel return "PENDING" job.
+      job.status.state == "DONE" or job.status.state == "PENDING"
+    end
+    assert_raise
+    err = assert_raise(Kura::ApiError) { @client.wait_job(jobid) }
+    power_assert do
+      err.reason == "stopped" and
+      err.message == "Job cancel was requested."
+    end
+  end
 end if File.readable?(ServiceAccountFilesPath)
