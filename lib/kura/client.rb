@@ -350,6 +350,8 @@ module Kura
       when Google::Apis::BigqueryV2::Job
         project_id = job.job_reference.project_id
         jobid = job.job_reference.job_id
+      else
+        raise TypeError, "Kura::Client#cancel_job accept String(job-id) or Google::Apis::BigqueryV2::Job"
       end
       @api.cancel_job(project_id, jobid).job
     end
@@ -364,7 +366,16 @@ module Kura
       return false
     end
 
-    def wait_job(job_id, timeout=60*10, project_id: @default_project_id)
+    def wait_job(job, timeout=60*10, project_id: @default_project_id)
+      case job
+      when String
+        job_id = job
+      when Google::Apis::BigqueryV2::Job
+        project_id = job.job_reference.project_id
+        job_id = job.job_reference.job_id
+      else
+        raise TypeError, "Kura::Client#wait_job accept String(job-id) or Google::Apis::BigqueryV2::Job"
+      end
       expire = Time.now + timeout
       while expire > Time.now
         j = job(job_id, project_id: project_id)
