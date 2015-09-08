@@ -3,6 +3,7 @@
 require "google/apis/bigquery_v2"
 require "googleauth"
 require "kura/version"
+require "kura/extensions"
 
 module Kura
   class Client
@@ -176,15 +177,15 @@ module Kura
     end
     private :mode_to_write_disposition
 
-    def insert_job(configuration, project_id: @default_project_id, media: nil, wait: nil)
+    def insert_job(configuration, project_id: @default_project_id, media: nil, wait: nil, &blk)
       job_object = Google::Apis::BigqueryV2::Job.new
       job_object.configuration = configuration
-      result = @api.insert_job(project_id, job_object, upload_source: media)
-      job_id = result.job_reference.job_id
+      job = @api.insert_job(project_id, job_object, upload_source: media)
+      job.kura_api = self
       if wait
-        wait_job(job_id, wait, project_id: project_id)
+        wait_job(job, wait, &blk)
       else
-        job_id
+        job
       end
     rescue
       process_error($!)
@@ -199,7 +200,8 @@ module Kura
               use_query_cache: true,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
-              wait: nil)
+              wait: nil,
+              &blk)
       write_disposition = mode_to_write_disposition(mode)
       configuration = {
         query: {
@@ -214,7 +216,7 @@ module Kura
       if dataset_id and table_id
         configuration[:query][:destination_table] = { project_id: project_id, dataset_id: dataset_id, table_id: table_id }
       end
-      insert_job(configuration, wait: wait, project_id: job_project_id)
+      insert_job(configuration, wait: wait, project_id: job_project_id, &blk)
     end
 
     def normalize_schema(schema)
@@ -252,7 +254,8 @@ module Kura
              source_format: "CSV",
              project_id: @default_project_id,
              job_project_id: @default_project_id,
-             file: nil, wait: nil)
+             file: nil, wait: nil,
+             &blk)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
       configuration = {
@@ -281,7 +284,7 @@ module Kura
       unless file
         configuration[:load][:source_uris] = source_uris
       end
-      insert_job(configuration, media: file, wait: wait, project_id: job_project_id)
+      insert_job(configuration, media: file, wait: wait, project_id: job_project_id, &blk)
     end
 
     def extract(dataset_id, table_id, dest_uris,
@@ -291,7 +294,8 @@ module Kura
                 print_header: true,
                 project_id: @default_project_id,
                 job_project_id: @default_project_id,
-                wait: nil)
+                wait: nil,
+                &blk)
       dest_uris = [ dest_uris ] if dest_uris.is_a?(String)
       configuration = {
         extract: {
@@ -309,7 +313,7 @@ module Kura
         configuration[:extract][:field_delimiter] = field_delimiter
         configuration[:extract][:print_header] = print_header
       end
-      insert_job(configuration, wait: wait, project_id: job_project_id)
+      insert_job(configuration, wait: wait, project_id: job_project_id, &blk)
     end
 
     def copy(src_dataset_id, src_table_id, dest_dataset_id, dest_table_id,
@@ -317,7 +321,8 @@ module Kura
              src_project_id: @default_project_id,
              dest_project_id: @default_project_id,
              job_project_id: @default_project_id,
-             wait: nil)
+             wait: nil,
+             &blk)
       write_disposition = mode_to_write_disposition(mode)
       configuration = {
         copy: {
@@ -334,11 +339,11 @@ module Kura
           write_disposition: write_disposition,
         }
       }
-      insert_job(configuration, wait: wait, project_id: job_project_id)
+      insert_job(configuration, wait: wait, project_id: job_project_id, &blk)
     end
 
     def job(job_id, project_id: @default_project_id)
-      @api.get_job(project_id, job_id)
+      @api.get_job(project_id, job_id).tap{|j| j.kura_api = self}
     rescue
       process_error($!)
     end
@@ -353,7 +358,7 @@ module Kura
       else
         raise TypeError, "Kura::Client#cancel_job accept String(job-id) or Google::Apis::BigqueryV2::Job"
       end
-      @api.cancel_job(project_id, jobid).job
+      @api.cancel_job(project_id, jobid).job.tap{|j| j.kura_api = self}
     end
 
     def job_finished?(r)

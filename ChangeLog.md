@@ -5,6 +5,12 @@
 * Add Kura::Client#cancel_job. Support jobs.cancel API.
   https://cloud.google.com/bigquery/docs/reference/v2/jobs/cancel
 * Kura::Client#wait_job accept Google::Apis::BigqueryV2::Job instance.
+* Add Google::Apis::BigqueryV2::Job#wait and #cancel methods.
+
+## Incompatible Changes
+
+* Kura::Client#insert_job (and #query, #load, #extract, #copy) return job
+  object (Google::Apis::BigqueryV2::Job instance) instead of job id (String).
 
 # 0.2.1
 
