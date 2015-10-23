@@ -198,6 +198,7 @@ module Kura
               flatten_results: true,
               priority: "INTERACTIVE",
               use_query_cache: true,
+              user_defined_function_resources: nil,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
               wait: nil,
@@ -215,6 +216,16 @@ module Kura
       }
       if dataset_id and table_id
         configuration[:query][:destination_table] = { project_id: project_id, dataset_id: dataset_id, table_id: table_id }
+      end
+      if user_defined_function_resources
+        configuration[:query][:user_defined_function_resources] = Array(user_defined_function_resources).map do |r|
+          r = r.to_s
+          if r.start_with?("gs://")
+            { resource_uri: r }
+          else
+            { inline_code: r }
+          end
+        end
       end
       insert_job(configuration, wait: wait, project_id: job_project_id, &blk)
     end

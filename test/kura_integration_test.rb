@@ -243,6 +243,31 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_query_with_user_defined_function
+    dataset = "_Kura_test"
+    table = "Kura_query_result_udf"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    q = "SELECT name, domain FROM extractUser((SELECT 'my@example.com' as email));"
+    udf = <<-EOF
+      function extract(row, emit) {
+        emit({name: row.email.split("@")[0], domain: row.email.split("@")[1]});
+      }
+      bigquery.defineFunction("extractUser", ["email"], [{name: "name", type: "string"},{name: "domain", type: "string"}], extract);
+    EOF
+
+    assert_nothing_raised do
+      @client.query(q, dataset_id: dataset, table_id: table, user_defined_function_resources: [udf], wait: 60)
+    end
+
+    assert_equal({next_token: nil, rows: [{"name"=>"my","domain"=>"example.com"}], total_rows: 1}, @client.list_tabledata(dataset, table))
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_media_upload
     dataset = "_Kura_test"
     table = "Kura_upload_test1"

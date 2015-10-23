@@ -1,3 +1,13 @@
+# 0.2.3
+
+## Enhancements
+
+* Support User Defined Function in Kura::Client#query.
+  https://cloud.google.com/bigquery/docs/reference/v2/jobs#configuration.query.userDefinedFunctionResources
+  Kura::Client#query accept `user_defined_function_resources` keyword arguments.
+  It should be a String or Array of strings.
+  The string begin with "gs://" is treated as URI for GCS object.
+
 # 0.2.2
 
 ## Enhancements
