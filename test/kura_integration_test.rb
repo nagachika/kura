@@ -36,7 +36,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     access = @client.dataset(@name).access.map(&:to_h)
     access << {
       role: "READER",
-      domain: "example.com",
+      domain: "groovenauts.jp",
     }
     @client.patch_dataset(@name, access: access, description: "Description#1", default_table_expiration_ms: 3_600_000, friendly_name: "FriendlyName#1")
     @client.dataset(@name).tap do |d|
