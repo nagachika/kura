@@ -1,3 +1,10 @@
+# 0.2.4
+
+## Enhancements
+
+* Kura::ApiError contains all error messages/reasons/locaitions/deubgInfo in
+  `errors` fields of response.
+
 # 0.2.3
 
 ## Enhancements
