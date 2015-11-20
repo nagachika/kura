@@ -1,3 +1,12 @@
+# 0.2.5
+
+## Enhancements
+
+* Add Kura::Client#batch and support Baches API call for #projects, #datasets, #dataset,
+  #tables, #table, #list\_tabledata. The results of these api call are passwed to blocks.
+  See also https://github.com/google/google-api-ruby-client#batches
+  The job insertion methods (load, query, extract, copy) are not supported to call in batch's block.
+
 # 0.2.4
 
 ## Enhancements

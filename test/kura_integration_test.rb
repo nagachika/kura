@@ -342,4 +342,29 @@ class KuraIntegrationTest < Test::Unit::TestCase
       err.message =~ /Job cancel was requested./
     end
   end
+
+  def test_batch_call
+    @client.batch do
+      @client.tables("samples", project_id: "publicdata") do |result, err|
+        assert_nil(err)
+        assert_equal(7, result.size)
+        assert_equal([
+          "publicdata:samples.github_nested",
+          "publicdata:samples.github_timeline",
+          "publicdata:samples.gsod",
+          "publicdata:samples.natality",
+          "publicdata:samples.shakespeare",
+          "publicdata:samples.trigrams",
+          "publicdata:samples.wikipedia",
+        ], result.map(&:id).sort)
+      end
+      @client.table("samples", "github_timeline", project_id: "publicdata") do |tbl, err|
+        assert_nil(err)
+        assert_equal(tbl.table_reference.project_id, "publicdata")
+        assert_equal(tbl.table_reference.dataset_id, "samples")
+        assert_equal(tbl.table_reference.table_id, "github_timeline")
+        assert_equal("TABLE", tbl.type)
+      end
+    end
+  end
 end if File.readable?(ServiceAccountFilesPath)

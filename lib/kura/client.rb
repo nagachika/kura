@@ -49,61 +49,93 @@ module Kura
     end
     private :process_error
 
-    def projects(limit: 1000)
-      result = @api.list_projects(max_results: limit)
-      result.projects
+    def batch
+      @api.batch do |api|
+        original_api, @api = @api, api
+        begin
+          yield
+        ensure
+          @api = original_api
+        end
+      end
+    end
+
+    def projects(limit: 1000, &blk)
+      if blk
+        @api.list_projects(max_results: limit) do |result, err|
+          result &&= result.projects
+          blk.call(result, err)
+        end
+      else
+        result = @api.list_projects(max_results: limit)
+        result.projects
+      end
     rescue
       process_error($!)
     end
 
-    def datasets(project_id: @default_project_id, all: false, limit: 1000)
-      result = @api.list_datasets(project_id, all: all, max_results: limit)
-      result.datasets
+    def datasets(project_id: @default_project_id, all: false, limit: 1000, &blk)
+      if blk
+        @api.list_datasets(project_id, all: all, max_results: limit) do |result, err|
+          result &&= result.datasets
+          blk.call(result, err)
+        end
+      else
+        result = @api.list_datasets(project_id, all: all, max_results: limit)
+        result.datasets
+      end
     rescue
       process_error($!)
     end
 
-    def dataset(dataset_id, project_id: @default_project_id)
-      @api.get_dataset(project_id, dataset_id)
+    def dataset(dataset_id, project_id: @default_project_id, &blk)
+      @api.get_dataset(project_id, dataset_id, &blk)
     rescue
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
       process_error($!)
     end
 
-    def insert_dataset(dataset_id, project_id: @default_project_id)
+    def insert_dataset(dataset_id, project_id: @default_project_id, &blk)
       obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
-      @api.insert_dataset(project_id, obj)
+      @api.insert_dataset(project_id, obj, &blk)
     rescue
       process_error($!)
     end
 
-    def delete_dataset(dataset_id, project_id: @default_project_id, delete_contents: false)
-      @api.delete_dataset(project_id, dataset_id, delete_contents: delete_contents)
+    def delete_dataset(dataset_id, project_id: @default_project_id, delete_contents: false, &blk)
+      @api.delete_dataset(project_id, dataset_id, delete_contents: delete_contents, &blk)
     rescue
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
       process_error($!)
     end
 
-    def patch_dataset(dataset_id, project_id: @default_project_id, access: nil, description: :na, default_table_expiration_ms: :na, friendly_name: :na )
+    def patch_dataset(dataset_id, project_id: @default_project_id, access: nil, description: :na, default_table_expiration_ms: :na, friendly_name: :na, &blk)
       obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
       obj.access = access if access
       obj.default_table_expiration_ms = default_table_expiration_ms if default_table_expiration_ms != :na
       obj.description = description if description != :na
       obj.friendly_name = friendly_name if friendly_name != :na
-      @api.patch_dataset(project_id, dataset_id, obj)
+      @api.patch_dataset(project_id, dataset_id, obj, &blk)
     rescue
       process_error($!)
     end
 
-    def tables(dataset_id, project_id: @default_project_id, limit: 1000)
-      result = @api.list_tables(project_id, dataset_id, max_results: limit)
-      result.tables
+    def tables(dataset_id, project_id: @default_project_id, limit: 1000, &blk)
+      if blk
+        @api.list_tables(project_id, dataset_id, max_results: limit) do |result, err|
+          result &&= result.tables
+          blk.call(result, err)
+        end
+      else
+        result = @api.list_tables(project_id, dataset_id, max_results: limit)
+        result.tables
+      end
     rescue
       process_error($!)
     end
 
-    def table(dataset_id, table_id, project_id: @default_project_id)
-      @api.get_table(project_id, dataset_id, table_id)
+    def table(dataset_id, table_id, project_id: @default_project_id, &blk)
+      @api.get_table(project_id, dataset_id, table_id, &blk)
     rescue
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
       process_error($!)
@@ -111,7 +143,7 @@ module Kura
 
     def insert_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: nil,
                      friendly_name: nil, schema: nil, description: nil,
-                     query: nil, external_data_configuration: nil)
+                     query: nil, external_data_configuration: nil, &blk)
       if expiration_time
         expiration_time = (expiration_time.to_f * 1000.0).to_i
       end
@@ -129,12 +161,12 @@ module Kura
         expiration_time: expiration_time,
         view: view,
         external_data_configuration: external_data_configuration)
-      @api.insert_table(project_id, dataset_id, table)
+      @api.insert_table(project_id, dataset_id, table, &blk)
     rescue
       process_error($!)
     end
 
-    def patch_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: :na, friendly_name: :na, description: :na)
+    def patch_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: :na, friendly_name: :na, description: :na, &blk)
       if expiration_time != :na and not(expiration_time.nil?)
         expiration_time = (expiration_time.to_f * 1000.0).to_i
       end
@@ -142,23 +174,19 @@ module Kura
       table.friendly_name = friendly_name if friendly_name != :na
       table.description = description if description != :na
       table.expiration_time = expiration_time if expiration_time != :na
-      @api.patch_table(project_id, dataset_id, table_id, table)
+      @api.patch_table(project_id, dataset_id, table_id, table, &blk)
     rescue
       process_error($!)
     end
 
-    def delete_table(dataset_id, table_id, project_id: @default_project_id)
-      @api.delete_table(project_id, dataset_id, table_id)
+    def delete_table(dataset_id, table_id, project_id: @default_project_id, &blk)
+      @api.delete_table(project_id, dataset_id, table_id, &blk)
     rescue
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
       process_error($!)
     end
 
-    def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil)
-      schema ||= table(dataset_id, table_id, project_id: project_id).schema.fields
-      field_names = schema.map{|f| f.respond_to?(:[]) ? (f["name"] || f[:name]) : f.name }
-
-      r = @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token)
+    def format_tabledata(r, field_names)
       {
         total_rows: r.total_rows.to_i,
         next_token: r.page_token,
@@ -166,6 +194,24 @@ module Kura
           row.f.zip(field_names).each_with_object({}) do |(v, fn), tbl| tbl[fn] = v.v end
         end
       }
+    end
+    private :format_tabledata
+
+    def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil, &blk)
+      schema ||= table(dataset_id, table_id, project_id: project_id).schema.fields
+      field_names = schema.map{|f| f.respond_to?(:[]) ? (f["name"] || f[:name]) : f.name }
+
+      if blk
+        @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token) do |r, err|
+          if r
+            r = format_tabledata(r, field_names)
+          end
+          blk.call(r, err)
+        end
+      else
+        r = @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token)
+        format_tabledata(r, field_names)
+      end
     rescue
       process_error($!)
     end
