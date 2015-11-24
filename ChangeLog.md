@@ -1,3 +1,9 @@
+# 0.2.6
+
+## Fixes
+
+* Kura::Client#dataset and #table called with block yields nil at notFound error for consistency.
+
 # 0.2.5
 
 ## Enhancements

@@ -366,5 +366,15 @@ class KuraIntegrationTest < Test::Unit::TestCase
         assert_equal("TABLE", tbl.type)
       end
     end
+    @client.batch do
+      @client.dataset("nodataset") do |result, err|
+        assert_nil(err)
+        assert_nil(result)
+      end
+      @client.table("nodataset", "notable") do |result, err|
+        assert_nil(err)
+        assert_nil(result)
+      end
+    end
   end
 end if File.readable?(ServiceAccountFilesPath)

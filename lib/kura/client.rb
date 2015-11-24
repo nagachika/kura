@@ -89,7 +89,17 @@ module Kura
     end
 
     def dataset(dataset_id, project_id: @default_project_id, &blk)
-      @api.get_dataset(project_id, dataset_id, &blk)
+      if blk
+        @api.get_dataset(project_id, dataset_id) do |result, err|
+          if err.respond_to?(:status_code) and err.status_code == 404
+            result = nil
+            err = nil
+          end
+          blk.call(result, err)
+        end
+      else
+        @api.get_dataset(project_id, dataset_id)
+      end
     rescue
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
       process_error($!)
@@ -135,7 +145,17 @@ module Kura
     end
 
     def table(dataset_id, table_id, project_id: @default_project_id, &blk)
-      @api.get_table(project_id, dataset_id, table_id, &blk)
+      if blk
+        @api.get_table(project_id, dataset_id, table_id) do |result, err|
+          if err.respond_to?(:status_code) and err.status_code == 404
+            result = nil
+            err = nil
+          end
+          blk.call(result, err)
+        end
+      else
+        @api.get_table(project_id, dataset_id, table_id)
+      end
     rescue
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
       process_error($!)
