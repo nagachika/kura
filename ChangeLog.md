@@ -1,3 +1,11 @@
+# 0.2.7
+
+## Fixes
+
+* Fix job API parameter processing. The boolean parameter in nested hash could be ignored when
+  `false` was passed on googla-api-client-0.9.pre3.
+  The keyword arguments `flatten_results` of `query` and `print_header` of `extract` were ignored.
+
 # 0.2.6
 
 ## Fixes
