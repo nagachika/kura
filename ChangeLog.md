@@ -1,3 +1,9 @@
+# 0.2.8
+
+## Fixes
+
+* BigQuery API rarely return HTML response body. Add treatment for the case.
+
 # 0.2.7
 
 ## Fixes

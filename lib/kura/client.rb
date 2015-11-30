@@ -38,10 +38,15 @@ module Kura
 
     def process_error(err)
       if err.respond_to?(:body)
-        jobj = JSON.parse(err.body)
-        error = jobj["error"]
-        reason = error["errors"].map{|e| e["reason"]}.join(",")
-        errors = error["errors"].map{|e| e["message"] }.join("\n")
+        begin
+          jobj = JSON.parse(err.body)
+          error = jobj["error"]
+          reason = error["errors"].map{|e| e["reason"]}.join(",")
+          errors = error["errors"].map{|e| e["message"] }.join("\n")
+        rescue JSON::ParserError
+          reason = err.status_code.to_s
+          errors = "HTTP Status: #{err.status_code}\nHeaders: #{err.header.inspect}\nBody:\n#{err.body}"
+        end
         raise Kura::ApiError.new(reason, errors)
       else
         raise err
