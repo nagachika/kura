@@ -1,5 +1,6 @@
 # coding: utf-8
 
+require "json"
 require "google/apis/bigquery_v2"
 require "googleauth"
 require "kura/version"
