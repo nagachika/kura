@@ -37,6 +37,15 @@ module Kura
       end
     end
 
+    def normalize_parameter(v)
+      case v
+      when nil
+        nil
+      else
+        v.to_s
+      end
+    end
+
     def process_error(err)
       if err.respond_to?(:body)
         begin
@@ -81,6 +90,7 @@ module Kura
     end
 
     def datasets(project_id: @default_project_id, all: false, limit: 1000, &blk)
+      all = normalize_parameter(all)
       if blk
         @api.list_datasets(project_id, all: all, max_results: limit) do |result, err|
           result &&= result.datasets
@@ -119,6 +129,7 @@ module Kura
     end
 
     def delete_dataset(dataset_id, project_id: @default_project_id, delete_contents: false, &blk)
+      delete_contents = normalize_parameter(delete_contents)
       @api.delete_dataset(project_id, dataset_id, delete_contents: delete_contents, &blk)
     rescue
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
@@ -287,10 +298,10 @@ module Kura
         query: Google::Apis::BigqueryV2::JobConfigurationQuery.new({
           query: sql,
           write_disposition: write_disposition,
-          allow_large_results: allow_large_results,
-          flatten_results: flatten_results,
+          allow_large_results: normalize_parameter(allow_large_results),
+          flatten_results: normalize_parameter(flatten_results),
           priority: priority,
-          use_query_cache: use_query_cache,
+          use_query_cache: normalize_parameter(use_query_cache),
         })
       })
       if dataset_id and table_id
@@ -357,9 +368,9 @@ module Kura
             table_id: table_id,
           }),
           write_disposition: write_disposition,
-          allow_jagged_rows: allow_jagged_rows,
+          allow_jagged_rows: normalize_parameter(allow_jagged_rows),
           max_bad_records: max_bad_records,
-          ignore_unknown_values: ignore_unknown_values,
+          ignore_unknown_values: normalize_parameter(ignore_unknown_values),
           source_format: source_format,
         })
       })
@@ -368,7 +379,7 @@ module Kura
       end
       if source_format == "CSV"
         configuration.load.field_delimiter = field_delimiter
-        configuration.load.allow_quoted_newlines = allow_quoted_newlines
+        configuration.load.allow_quoted_newlines = normalize_parameter(allow_quoted_newlines)
         configuration.load.quote = quote
         configuration.load.skip_leading_rows = skip_leading_rows
       end
@@ -403,7 +414,7 @@ module Kura
       })
       if destination_format == "CSV"
         configuration.extract.field_delimiter = field_delimiter
-        configuration.extract.print_header = print_header
+        configuration.extract.print_header = normalize_parameter(print_header)
       end
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end

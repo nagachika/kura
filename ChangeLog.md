@@ -7,6 +7,11 @@
   job insertion at network failure.
   see https://cloud.google.com/bigquery/docs/managing_jobs_datasets_projects#generate-jobid
 
+## Fixes
+
+* Add workaround of a bug in google-api-client-0.9.pre4.
+  see https://github.com/google/google-api-ruby-client/issues/326
+
 # 0.2.8
 
 ## Fixes
