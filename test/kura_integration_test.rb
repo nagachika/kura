@@ -1,5 +1,6 @@
 require 'test_helper'
 require "json"
+require "securerandom"
 
 ServiceAccountFilesPath = File.expand_path("../data/service_account.json", __FILE__)
 
@@ -233,8 +234,13 @@ class KuraIntegrationTest < Test::Unit::TestCase
       @client.insert_dataset(dataset)
     end
 
+    job_id = SecureRandom.uuid
+    job = nil
     assert_nothing_raised do
-      @client.query("SELECT count(*) FROM [publicdata:samples.wikipedia]", dataset_id: dataset, table_id: table, wait: 60)
+      job = @client.query("SELECT count(*) FROM [publicdata:samples.wikipedia]", dataset_id: dataset, table_id: table, job_id: job_id, wait: 60)
+    end
+    power_assert do
+      job.job_reference.job_id == job_id
     end
 
     assert_equal({next_token: nil, rows: [{"f0_"=>"313797035"}], total_rows: 1}, @client.list_tabledata(dataset, table))
@@ -283,9 +289,14 @@ class KuraIntegrationTest < Test::Unit::TestCase
       aaa,bbb
       ccc,ddd
     EOC
+    job_id = SecureRandom.uuid
+    job = nil
     assert_nothing_raised do
-      job_id = @client.load(dataset, table, schema: schema, file: io, mode: :truncate)
-      @client.wait_job(job_id, 300)
+      job = @client.load(dataset, table, schema: schema, file: io, mode: :truncate, job_id: job_id)
+      job.wait(300)
+    end
+    power_assert do
+      job.job_reference.job_id == job_id
     end
     power_assert do
       "#{@project_id}:#{dataset}.#{table}" == @client.table(dataset, table).id

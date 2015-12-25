@@ -250,9 +250,14 @@ module Kura
     end
     private :mode_to_write_disposition
 
-    def insert_job(configuration, project_id: @default_project_id, media: nil, wait: nil, &blk)
+    def insert_job(configuration, job_id: nil, project_id: @default_project_id, media: nil, wait: nil, &blk)
       job_object = Google::Apis::BigqueryV2::Job.new
       job_object.configuration = configuration
+      if job_id
+        job_object.job_reference = Google::Apis::BigqueryV2::JobReference.new
+        job_object.job_reference.project_id = project_id
+        job_object.job_reference.job_id = job_id
+      end
       job = @api.insert_job(project_id, job_object, upload_source: media)
       job.kura_api = self
       if wait
@@ -274,6 +279,7 @@ module Kura
               user_defined_function_resources: nil,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
+              job_id: nil,
               wait: nil,
               &blk)
       write_disposition = mode_to_write_disposition(mode)
@@ -300,7 +306,7 @@ module Kura
           end
         end
       end
-      insert_job(configuration, wait: wait, project_id: job_project_id, &blk)
+      insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
     def normalize_schema(schema)
@@ -338,6 +344,7 @@ module Kura
              source_format: "CSV",
              project_id: @default_project_id,
              job_project_id: @default_project_id,
+             job_id: nil,
              file: nil, wait: nil,
              &blk)
       write_disposition = mode_to_write_disposition(mode)
@@ -368,7 +375,7 @@ module Kura
       unless file
         configuration.load.source_uris = source_uris
       end
-      insert_job(configuration, media: file, wait: wait, project_id: job_project_id, &blk)
+      insert_job(configuration, media: file, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
     def extract(dataset_id, table_id, dest_uris,
@@ -378,6 +385,7 @@ module Kura
                 print_header: true,
                 project_id: @default_project_id,
                 job_project_id: @default_project_id,
+                job_id: nil,
                 wait: nil,
                 &blk)
       dest_uris = [ dest_uris ] if dest_uris.is_a?(String)
@@ -397,7 +405,7 @@ module Kura
         configuration.extract.field_delimiter = field_delimiter
         configuration.extract.print_header = print_header
       end
-      insert_job(configuration, wait: wait, project_id: job_project_id, &blk)
+      insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
     def copy(src_dataset_id, src_table_id, dest_dataset_id, dest_table_id,
@@ -405,6 +413,7 @@ module Kura
              src_project_id: @default_project_id,
              dest_project_id: @default_project_id,
              job_project_id: @default_project_id,
+             job_id: nil,
              wait: nil,
              &blk)
       write_disposition = mode_to_write_disposition(mode)
@@ -423,7 +432,7 @@ module Kura
           write_disposition: write_disposition,
         })
       })
-      insert_job(configuration, wait: wait, project_id: job_project_id, &blk)
+      insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
     def job(job_id, project_id: @default_project_id)

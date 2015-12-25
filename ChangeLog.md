@@ -1,3 +1,12 @@
+# 0.2.9
+
+## Enhancements
+
+* Add keyword argument `job_id` to query/load/extract/copy.
+  You can generate unique jobId on client side and pass it to get rid of duplicated
+  job insertion at network failure.
+  see https://cloud.google.com/bigquery/docs/managing_jobs_datasets_projects#generate-jobid
+
 # 0.2.8
 
 ## Fixes
