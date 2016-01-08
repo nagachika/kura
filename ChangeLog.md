@@ -6,6 +6,7 @@
   You can generate unique jobId on client side and pass it to get rid of duplicated
   job insertion at network failure.
   see https://cloud.google.com/bigquery/docs/managing_jobs_datasets_projects#generate-jobid
+* Add keyword argument `dry_run` to query/load/extract/copy.
 
 ## Fixes
 

@@ -292,6 +292,7 @@ module Kura
               job_project_id: @default_project_id,
               job_id: nil,
               wait: nil,
+              dry_run: false,
               &blk)
       write_disposition = mode_to_write_disposition(mode)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
@@ -304,6 +305,10 @@ module Kura
           use_query_cache: normalize_parameter(use_query_cache),
         })
       })
+      if dry_run
+        configuration.dry_run = true
+        wait = nil
+      end
       if dataset_id and table_id
         configuration.query.destination_table = Google::Apis::BigqueryV2::TableReference.new({ project_id: project_id, dataset_id: dataset_id, table_id: table_id })
       end
@@ -357,6 +362,7 @@ module Kura
              job_project_id: @default_project_id,
              job_id: nil,
              file: nil, wait: nil,
+             dry_run: false,
              &blk)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
@@ -374,6 +380,10 @@ module Kura
           source_format: source_format,
         })
       })
+      if dry_run
+        configuration.dry_run = true
+        wait = nil
+      end
       if schema
         configuration.load.schema = Google::Apis::BigqueryV2::TableSchema.new({ fields: normalize_schema(schema) })
       end
@@ -398,6 +408,7 @@ module Kura
                 job_project_id: @default_project_id,
                 job_id: nil,
                 wait: nil,
+                dry_run: false,
                 &blk)
       dest_uris = [ dest_uris ] if dest_uris.is_a?(String)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
@@ -412,6 +423,10 @@ module Kura
           destination_uris: dest_uris,
         })
       })
+      if dry_run
+        configuration.dry_run = true
+        wait = nil
+      end
       if destination_format == "CSV"
         configuration.extract.field_delimiter = field_delimiter
         configuration.extract.print_header = normalize_parameter(print_header)
@@ -426,6 +441,7 @@ module Kura
              job_project_id: @default_project_id,
              job_id: nil,
              wait: nil,
+             dry_run: false,
              &blk)
       write_disposition = mode_to_write_disposition(mode)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
@@ -443,6 +459,10 @@ module Kura
           write_disposition: write_disposition,
         })
       })
+      if dry_run
+        configuration.dry_run = true
+        wait = nil
+      end
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 

@@ -274,6 +274,31 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_query_with_dry_run
+    dataset = "_Kura_test"
+    table = "Kura_query_dry_run"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    q = "SELECT title FROM [publicdata:samples.wikipedia];"
+
+    job = nil
+    assert_nothing_raised do
+      job = @client.query(q, dataset_id: dataset, table_id: table, dry_run: true)
+    end
+
+    assert_nil(@client.table(dataset, table))
+    power_assert do
+      job.statistics.query.total_bytes_billed.to_i == 0
+    end
+    power_assert do
+      job.statistics.query.total_bytes_processed.to_i > 0
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_media_upload
     dataset = "_Kura_test"
     table = "Kura_upload_test1"
