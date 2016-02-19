@@ -227,7 +227,7 @@ module Kura
       {
         total_rows: r.total_rows.to_i,
         next_token: r.page_token,
-        rows: r.rows.map do |row|
+        rows: (r.rows || []).map do |row|
           row.f.zip(field_names).each_with_object({}) do |(v, fn), tbl| tbl[fn] = v.v end
         end
       }

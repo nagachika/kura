@@ -1,3 +1,9 @@
+# 0.2.10
+
+# Fixes
+
+* Fix NoMethodError in Kura::Client#list_tabledata when table is empty.
+
 # 0.2.9
 
 ## Enhancements

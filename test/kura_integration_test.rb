@@ -215,10 +215,24 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_match(/invalid:dataset/, err.message)
   end
 
-  def test_list_tableata_with_invalid_dataset
+  def test_list_tabledata_with_invalid_dataset
     err = assert_raise(Kura::ApiError) { @client.list_tabledata("invalid:dataset", "nonexist", schema: [{"name": "f1"}]) }
     assert_equal("invalid", err.reason)
     assert_match(/invalid:dataset/, err.message)
+  end
+
+  def test_list_tabledata_with_empty_table
+    dataset = "_Kura_test"
+    table = "empty"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    @client.insert_table(dataset, table, schema: [{name: "a", type: "STRING", mode: "NULLABLE"}])
+    power_assert do
+      @client.list_tabledata(dataset, table) == { total_rows: 0, next_token: nil, rows: [] }
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
   end
 
   def test_query_with_invalid_dataset
