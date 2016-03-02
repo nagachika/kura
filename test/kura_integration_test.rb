@@ -217,7 +217,9 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
   def test_list_tabledata_with_invalid_dataset
     err = assert_raise(Kura::ApiError) { @client.list_tabledata("invalid:dataset", "nonexist", schema: [{"name": "f1"}]) }
-    assert_equal("invalid", err.reason)
+    # 2016-03-02: Currently BigQuery API tabledata.list behavior changed to return notFound for invalid dataset id
+    # assert_equal("invalid", err.reason)
+    assert_equal("notFound", err.reason)
     assert_match(/invalid:dataset/, err.message)
   end
 
