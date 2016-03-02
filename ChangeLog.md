@@ -1,3 +1,9 @@
+# 0.2.11
+
+## Enhancements
+
+* Add Kura::Client#insert\_tabledata. This is wrapper for tabledata.insertAll.
+
 # 0.2.10
 
 # Fixes

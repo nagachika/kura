@@ -235,6 +235,25 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_insert_tabledata
+    dataset = "_Kura_test"
+    table = "insert_table"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}, {name: "s", type: "STRING", mode: "NULLABLE"}])
+
+    @client.insert_tabledata(dataset, table, [{n: 42, s: "Hello, World!"}])
+    sleep 5
+    job = @client.query("SELECT * from [#{dataset}.#{table}] LIMIT 100", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
+    dest = job.configuration.query.destination_table
+    power_assert do
+      @client.list_tabledata(dest.dataset_id, dest.table_id) == { total_rows: 1, next_token: nil, rows: [{"n" => "42", "s" => "Hello, World!"}] }
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_query_with_invalid_dataset
     err = assert_raise(Kura::ApiError) { @client.query("INVALID SQL", dataset_id: "invalid:dataset", table_id: "dummy") }
     assert_equal("invalid", err.reason)

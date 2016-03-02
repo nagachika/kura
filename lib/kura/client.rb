@@ -253,6 +253,36 @@ module Kura
       process_error($!)
     end
 
+    def insert_tabledata(dataset_id, table_id, rows, project_id: @default_project_id, ignore_unknown_values: false, skip_invalid_rows: false, template_suffix: nil)
+      request = Google::Apis::BigqueryV2::InsertAllTableDataRequest.new
+      request.ignore_unknown_values = ignore_unknown_values
+      request.skip_invalid_rows = skip_invalid_rows
+      if template_suffix
+        request.template_suffix = template_suffix
+      end
+      request.rows = rows.map do |r|
+        case r
+        when Google::Apis::BigqueryV2::InsertAllTableDataRequest::Row
+          r
+        when Hash
+          row = Google::Apis::BigqueryV2::InsertAllTableDataRequest::Row.new
+          if r.keys.map(&:to_s) == %w{ insert_id json }
+            row.insert_id = r[:insert_id] || r["insert_id"]
+            row.json = r[:json] || r["json"]
+          else
+            row.json = r
+          end
+          row
+        else
+          raise ArgumentError, "invalid row for BigQuery tabledata.insertAll #{r.inspect}"
+        end
+      end
+
+      r = @api.insert_all_table_data(project_id, dataset_id, table_id, request)
+    rescue
+      process_error($!)
+    end
+
     def mode_to_write_disposition(mode)
       unless %i{ append truncate empty }.include?(mode)
         raise "mode option should be one of :append, :truncate, :empty but #{mode}"
