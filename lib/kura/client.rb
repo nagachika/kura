@@ -507,13 +507,20 @@ module Kura
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
-    def job(job_id, project_id: @default_project_id)
-      @api.get_job(project_id, job_id).tap{|j| j.kura_api = self}
+    def job(job_id, project_id: @default_project_id, &blk)
+      if blk
+        @api.get_job(project_id, job_id) do |j, e|
+          j.kura_api = self
+          blk.call(j, e)
+        end
+      else
+        @api.get_job(project_id, job_id).tap{|j| j.kura_api = self}
+      end
     rescue
       process_error($!)
     end
 
-    def cancel_job(job, project_id: @default_project_id)
+    def cancel_job(job, project_id: @default_project_id, &blk)
       case job
       when String
         jobid = job
@@ -523,7 +530,14 @@ module Kura
       else
         raise TypeError, "Kura::Client#cancel_job accept String(job-id) or Google::Apis::BigqueryV2::Job"
       end
-      @api.cancel_job(project_id, jobid).job.tap{|j| j.kura_api = self}
+      if blk
+        @api.cancel_job(project_id, jobid) do |r, e|
+          r.job.kura_api = self
+          blk.call(r.job, e)
+        end
+      else
+        @api.cancel_job(project_id, jobid).job.tap{|j| j.kura_api = self}
+      end
     end
 
     def job_finished?(r)

@@ -1,3 +1,9 @@
+# 0.2.13
+
+## Enhancements
+
+* Support #job, #cancel_job API in batch requests.
+
 # 0.2.12
 
 ## Enhancements
