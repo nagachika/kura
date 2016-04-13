@@ -299,12 +299,23 @@ module Kura
         job_object.job_reference.project_id = project_id
         job_object.job_reference.job_id = job_id
       end
-      job = @api.insert_job(project_id, job_object, upload_source: media)
-      job.kura_api = self
       if wait
+        job = @api.insert_job(project_id, job_object, upload_source: media)
+        job.kura_api = self
         wait_job(job, wait, &blk)
       else
-        job
+        if blk
+          @api.insert_job(project_id, job_object, upload_source: media) do |r, err|
+            if r
+              r.kura_api = self
+            end
+            blk.call(r, err)
+          end
+        else
+          job = @api.insert_job(project_id, job_object, upload_source: media)
+          job.kura_api = self
+          job
+        end
       end
     rescue
       process_error($!)

@@ -448,4 +448,23 @@ class KuraIntegrationTest < Test::Unit::TestCase
       end
     end
   end
+
+  def test_batch_job_insert
+    jobs = []
+    @client.batch do
+      @client.query("SELECT 0 as a", allow_large_results: false) do |job, err|
+        jobs << job
+        assert_nil(err)
+      end
+      @client.query("SELECT 1 as b", allow_large_results: false) do |job, err|
+        jobs << job
+        assert_nil(err)
+      end
+    end
+    jobs.map! do |j|
+      j = j.wait(120)
+    end
+    assert_equal(@client.list_tabledata(jobs[0].configuration.query.destination_table.dataset_id, jobs[0].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "a" => "0" }] })
+    assert_equal(@client.list_tabledata(jobs[1].configuration.query.destination_table.dataset_id, jobs[1].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "b" => "1" }] })
+  end
 end if File.readable?(ServiceAccountFilesPath)

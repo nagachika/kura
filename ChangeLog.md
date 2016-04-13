@@ -1,3 +1,13 @@
+# 0.2.12
+
+## Enhancements
+
+* Support job APIs in batch requests.
+  Until now load/query/extract/copy methods reiceived block to be yielded when
+  the keyword argument :wait was specified and polling every second.
+  In batch request (in block of Kura::Client#batch), you cannot specified :wait
+  keyword argument and block will be yielded when batch response are passed.
+
 # 0.2.11
 
 ## Enhancements
