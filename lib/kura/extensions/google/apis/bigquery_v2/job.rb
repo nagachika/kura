@@ -12,5 +12,9 @@ class Google::Apis::BigqueryV2::Job
   def cancel
     kura_api.cancel_job(self)
   end
+
+  def inspect
+    "<##{self.class} job_id=#{self.job_reference.job_id rescue nil}>"
+  end
 end
 
