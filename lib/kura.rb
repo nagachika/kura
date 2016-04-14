@@ -34,8 +34,28 @@ module Kura
     private_key
   end
 
+  # == Kura.client
+  # Create Kura::Client object with GCP credential.
+  #
+  #     Kura.client(json_key_file)
+  #     Kura.client(json_key_hash)
+  #     Kura.client(gcp_project_id, email_address, prm_file)
+  #     Kura.client(gcp_project_id, email_address, prm_file_contents)
+  #     Kura.client(gcp_project_id, email_address, private_key_object)
+  #
   def self.client(project_id=nil, email_address=nil, private_key=nil, http_options: {timeout: 60})
-    if private_key
+    if email_address.nil? and private_key.nil?
+      if project_id.is_a?(String)
+        credential = JSON.parse(File.binread(project_id))
+      elsif project_id.is_a?(Hash)
+        credential = project_id
+      else
+        raise ArgumentError, "#{self.class.name}.client accept JSON credential file path or decoded Hash object."
+      end
+      project_id = credential["project_id"]
+      email_address = credential["client_email"]
+      private_key = get_private_key(credential["private_key"])
+    elsif private_key
       private_key = get_private_key(private_key)
     end
     self::Client.new(default_project_id: project_id, email_address: email_address, private_key: private_key, http_options: http_options)

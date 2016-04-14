@@ -25,7 +25,12 @@ Or install it yourself as:
 
 ```
 # a. With Service Account Private Key
+## 1. project ID + email + private key (filepath or contents of .pem format file, or OpenSSL::PKey object)
 client = Kura.client(project_id, email, private_key)
+
+## 2. JSON key file downloaded from Google Developers Console.
+client = Kura.client(json_file_path)
+client = Kura.client(JSON.parse(File.read(json_file_path)))
 
 # b. With GCE bigquery scope (Only available on Google Compute Engine instance)
 client = Kura.client

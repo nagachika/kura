@@ -1,3 +1,9 @@
+# 0.2.14
+
+## Enhancements
+
+* Kura.client now accept JSON key file.
+
 # 0.2.13
 
 ## Enhancements

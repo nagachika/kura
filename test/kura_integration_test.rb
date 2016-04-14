@@ -8,10 +8,8 @@ class KuraIntegrationTest < Test::Unit::TestCase
   def setup
     service_account = JSON.parse(File.binread(ServiceAccountFilesPath))
     @project_id = service_account["project_id"]
-    @email = service_account["client_email"]
-    @private_key = service_account["private_key"]
 
-    @client = Kura.client(@project_id, @email, @private_key)
+    @client = Kura.client(service_account)
 
     # for reduce power_assert display
     def @client.inspect
