@@ -1,3 +1,9 @@
+# 0.2.15
+
+## Fixes
+
+* Fix NoMethodError if #get_job/#cancel_job return nil for job.
+
 # 0.2.14
 
 ## Enhancements

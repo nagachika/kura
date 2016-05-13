@@ -510,11 +510,11 @@ module Kura
     def job(job_id, project_id: @default_project_id, &blk)
       if blk
         @api.get_job(project_id, job_id) do |j, e|
-          j.kura_api = self
+          j.kura_api = self if j
           blk.call(j, e)
         end
       else
-        @api.get_job(project_id, job_id).tap{|j| j.kura_api = self}
+        @api.get_job(project_id, job_id).tap{|j| j.kura_api = self if j }
       end
     rescue
       process_error($!)
@@ -532,11 +532,11 @@ module Kura
       end
       if blk
         @api.cancel_job(project_id, jobid) do |r, e|
-          r.job.kura_api = self
+          r.job.kura_api = self if r.job
           blk.call(r.job, e)
         end
       else
-        @api.cancel_job(project_id, jobid).job.tap{|j| j.kura_api = self}
+        @api.cancel_job(project_id, jobid).job.tap{|j| j.kura_api = self if j }
       end
     end
 
