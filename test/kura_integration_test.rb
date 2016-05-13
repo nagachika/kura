@@ -465,4 +465,28 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_equal(@client.list_tabledata(jobs[0].configuration.query.destination_table.dataset_id, jobs[0].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "a" => "0" }] })
     assert_equal(@client.list_tabledata(jobs[1].configuration.query.destination_table.dataset_id, jobs[1].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "b" => "1" }] })
   end
+
+  def test_copy
+    src_project = "publicdata"
+    src_dataset = "samples"
+    src_table = "shakespeare"
+    dataset = "_Kura_test"
+    table = "Kura_copy"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    assert_nothing_raised do
+      @client.copy(src_dataset, src_table, dataset, table, src_project_id: src_project, wait: 60)
+    end
+
+    src = @client.list_tabledata(src_dataset, src_table, project_id: src_project)
+    dest = @client.list_tabledata(dataset, table)
+    assert_equal(src[:total_rows], dest[:total_rows])
+    assert_equal(src[:rows], dest[:rows])
+
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
 end if File.readable?(ServiceAccountFilesPath)
