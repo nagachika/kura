@@ -486,7 +486,7 @@ module Kura
              &blk)
       write_disposition = mode_to_write_disposition(mode)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
-        copy: Google::Apis::BigqueryV2::JobConfigurationCopy.new({
+        copy: Google::Apis::BigqueryV2::JobConfigurationTableCopy.new({
           destination_table: Google::Apis::BigqueryV2::TableReference.new({
             project_id: dest_project_id,
             dataset_id: dest_dataset_id,
