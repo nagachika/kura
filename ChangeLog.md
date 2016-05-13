@@ -1,3 +1,10 @@
+# 0.2.16
+
+## Fixes
+
+* Fix NameError at #copy job method.
+  The patch is provided by @hakobera.
+
 # 0.2.15
 
 ## Fixes
