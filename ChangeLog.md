@@ -1,3 +1,9 @@
+# 0.2.17
+
+## Incompatible Changes
+
+* Update dependent google-api-client ~> 0.9.3.
+
 # 0.2.16
 
 ## Fixes
