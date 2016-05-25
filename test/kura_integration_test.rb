@@ -332,6 +332,26 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_query_with_standard_sql
+    dataset = "_Kura_test"
+    table = "Kura_query_standard_sql"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    q = %{(SELECT "a" as col) UNION DISTINCT (SELECT "b" as col) UNION DISTINCT (SELECT "a" as col) ORDER BY col;}
+
+    job = nil
+    assert_nothing_raised do
+      job = @client.query(q, dataset_id: dataset, table_id: table, use_legacy_sql: false, wait: 120)
+    end
+
+    assert_equal({next_token: nil, rows: [{"col"=>"a"},{"col"=>"b"}], total_rows: 2}, @client.list_tabledata(dataset, table))
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_media_upload
     dataset = "_Kura_test"
     table = "Kura_upload_test1"

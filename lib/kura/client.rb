@@ -329,6 +329,7 @@ module Kura
               priority: "INTERACTIVE",
               use_query_cache: true,
               user_defined_function_resources: nil,
+              use_legacy_sql: true,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
               job_id: nil,
@@ -344,6 +345,7 @@ module Kura
           flatten_results: normalize_parameter(flatten_results),
           priority: priority,
           use_query_cache: normalize_parameter(use_query_cache),
+          use_legacy_sql: use_legacy_sql,
         })
       })
       if dry_run

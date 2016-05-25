@@ -4,6 +4,10 @@
 
 * Update dependent google-api-client ~> 0.9.3.
 
+## Enhancements
+
+* Support `use_legacy_sql` parameter in Kura::Client#query.
+
 # 0.2.16
 
 ## Fixes
