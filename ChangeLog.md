@@ -1,3 +1,10 @@
+# 0.2.23
+
+## Enhancements
+
+* Support "Partitioned Tables". Add `time_partitioning` kwarg of `insert_table`.
+  It seems that you cannot change partitioning settings of existing table.
+
 # 0.2.22
 
 ## Enhancements

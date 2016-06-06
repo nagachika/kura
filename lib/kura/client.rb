@@ -181,7 +181,9 @@ module Kura
     def insert_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: nil,
                      friendly_name: nil, schema: nil, description: nil,
                      query: nil, external_data_configuration: nil,
-                     use_legacy_sql: true, &blk)
+                     use_legacy_sql: true,
+                     time_partitioning: { type: "DAY" },
+                     &blk)
       if expiration_time
         expiration_time = (expiration_time.to_f * 1000.0).to_i
       end
@@ -198,8 +200,10 @@ module Kura
         schema: schema,
         expiration_time: expiration_time,
         view: view,
-        time_partitioning: Google::Apis::BigqueryV2::TimePartitioning.new(type: "DAY"),
         external_data_configuration: external_data_configuration)
+      if time_partitioning
+        table.time_partitioning = Google::Apis::BigqueryV2::TimePartitioning.new(time_partitioning)
+      end
       @api.insert_table(project_id, dataset_id, table, &blk)
     rescue
       process_error($!)
