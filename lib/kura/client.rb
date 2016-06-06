@@ -198,6 +198,7 @@ module Kura
         schema: schema,
         expiration_time: expiration_time,
         view: view,
+        time_partitioning: Google::Apis::BigqueryV2::TimePartitioning.new(type: "DAY"),
         external_data_configuration: external_data_configuration)
       @api.insert_table(project_id, dataset_id, table, &blk)
     rescue
