@@ -509,4 +509,21 @@ class KuraIntegrationTest < Test::Unit::TestCase
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
   end
+
+  def test_error_upload_media_in_batch
+    dataset = "_Kura_test"
+    schema = [
+      { name: "f1", type: "STRING", mode: "NULLABLE" },
+      { name: "f2", type: "STRING", mode: "NULLABLE" },
+    ]
+    io = StringIO.new(<<-EOC.gsub(/^\s+/, ""))
+      aaa,bbb
+      ccc,ddd
+    EOC
+    err = nil
+    assert_nothing_raised do
+      err = assert_raise(Google::Apis::ClientError) { @client.batch { @client.load(dataset, "dummy", schema: schema, file: io, mode: :truncate) } }
+    end
+    assert_match(/Can not include media requests in batch/i, err.message)
+  end
 end if File.readable?(ServiceAccountFilesPath)

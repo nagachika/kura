@@ -47,7 +47,7 @@ module Kura
     end
 
     def process_error(err)
-      if err.respond_to?(:body)
+      if err.respond_to?(:body) and err.body
         begin
           jobj = JSON.parse(err.body)
           error = jobj["error"]

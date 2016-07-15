@@ -1,3 +1,9 @@
+# 0.2.18
+
+## Fixes
+
+* Handler error media load job in batch mode.
+
 # 0.2.17
 
 ## Incompatible Changes
