@@ -4,6 +4,11 @@
 
 * Handler error media load job in batch mode.
 
+## Enhancements
+
+* Add keyworkd argument `use_legacy_sql` to Kura::Client#insert_table to
+  support create View with Standard SQL.
+
 # 0.2.17
 
 ## Incompatible Changes

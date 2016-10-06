@@ -180,12 +180,13 @@ module Kura
 
     def insert_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: nil,
                      friendly_name: nil, schema: nil, description: nil,
-                     query: nil, external_data_configuration: nil, &blk)
+                     query: nil, external_data_configuration: nil,
+                     use_legacy_sql: true, &blk)
       if expiration_time
         expiration_time = (expiration_time.to_f * 1000.0).to_i
       end
       if query
-        view = { query: query }
+        view = { query: query, use_legacy_sql: !!use_legacy_sql }
       elsif external_data_configuration
       elsif schema
         schema = { fields: normalize_schema(schema) }

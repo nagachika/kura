@@ -39,7 +39,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     }
     @client.patch_dataset(@name, access: access, description: "Description#1", default_table_expiration_ms: 3_600_000, friendly_name: "FriendlyName#1")
     @client.dataset(@name).tap do |d|
-      assert_equal(access, d.access.map(&:to_h))
+      assert_equal(access.sort_by{|i| i.inspect}, d.access.map(&:to_h).sort_by{|i| i.inspect})
       assert_equal("Description#1", d.description)
       assert_equal("FriendlyName#1", d.friendly_name)
       assert_equal(3_600_000, d.default_table_expiration_ms.to_i)
@@ -160,6 +160,39 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
     power_assert do
       t.type == "VIEW"
+    end
+    power_assert do
+      t.view.use_legacy_sql == true
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_insert_table_view_with_standard_sql
+    dataset = "_Kura_test"
+    table = "insert_table"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    query = "SELECT COUNT(*) FROM `publicdata:samples.wikipedia`;"
+    power_assert do
+      @client.insert_table(dataset, table, query: query, use_legacy_sql: false)
+    end
+    t = @client.table(dataset, table)
+    power_assert do
+      t.table_reference.dataset_id == dataset
+    end
+    power_assert do
+      t.table_reference.table_id == table
+    end
+    power_assert do
+      t.view.query == query
+    end
+    power_assert do
+      t.type == "VIEW"
+    end
+    power_assert do
+      t.view.use_legacy_sql == false
     end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
