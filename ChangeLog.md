@@ -1,3 +1,9 @@
+# 0.2.19
+
+## Fixes
+
+* `list_tabledata` can now handle REPEATED fields.
+
 # 0.2.18
 
 ## Fixes

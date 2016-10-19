@@ -229,7 +229,13 @@ module Kura
         total_rows: r.total_rows.to_i,
         next_token: r.page_token,
         rows: (r.rows || []).map do |row|
-          row.f.zip(field_names).each_with_object({}) do |(v, fn), tbl| tbl[fn] = v.v end
+          row.f.zip(field_names).each_with_object({}) do |(v, fn), tbl|
+            if v.v.is_a?(Array)
+              tbl[fn] = v.v.map{|c| c["v"] }
+            else
+              tbl[fn] = v.v
+            end
+          end
         end
       }
     end
