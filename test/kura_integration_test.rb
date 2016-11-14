@@ -385,6 +385,57 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_query_with_maximum_billing_tier
+    dataset = "_Kura_test"
+    table = "Kura_query_with_maximum_billing_tier"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    q = %{SELECT COUNT(*) FROM publicdata:samples.wikipedia;}
+
+    job = nil
+    assert_nothing_raised do
+      job = @client.query(q, dataset_id: dataset, table_id: table, maximum_billing_tier: 1, wait: 120)
+    end
+
+    power_assert do
+      job.configuration.query.maximum_billing_tier == 1
+    end
+
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_query_with_maximum_bytes_billed
+    dataset = "_Kura_test"
+    table = "Kura_query_with_maximum_bytes_billed"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    q = %{SELECT COUNT(*) FROM publicdata:samples.wikipedia;}
+
+    job = nil
+    assert_nothing_raised do
+      job = @client.query(q, dataset_id: dataset, table_id: table, maximum_bytes_billed: 0, wait: 120)
+    end
+
+    assert_equal(job.configuration.query.maximum_bytes_billed, "0")
+
+    q = %{SELECT * FROM publicdata:samples.wikipedia;}
+    job = nil
+    err = assert_raise(Kura::ApiError) do
+      job = @client.query(q, dataset_id: dataset, table_id: table, maximum_bytes_billed: 0, wait: 120)
+    end
+    assert_match(/bytesBilledLimitExceeded/i, err.message)
+
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_media_upload
     dataset = "_Kura_test"
     table = "Kura_upload_test1"
@@ -457,7 +508,6 @@ class KuraIntegrationTest < Test::Unit::TestCase
       # Sometimes jobs.cancel return "PENDING" job.
       job.status.state == "DONE" or job.status.state == "PENDING"
     end
-    assert_raise
     err = assert_raise(Kura::ApiError) { @client.wait_job(jobid) }
     power_assert do
       err.reason == "stopped" and

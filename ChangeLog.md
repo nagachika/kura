@@ -1,3 +1,13 @@
+# 0.2.21
+
+## Incompatible Changes
+
+* update dependency to google-api-client.gem (>~ 0.9.11).
+
+## Enhancements
+
+* Support `maximum_billing_tier` and `maximum_bytes_billed` keyword arguments for `query`.
+
 # 0.2.20
 
 ## Incompatible Changes

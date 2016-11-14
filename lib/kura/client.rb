@@ -337,6 +337,8 @@ module Kura
               use_query_cache: true,
               user_defined_function_resources: nil,
               use_legacy_sql: true,
+              maximum_billing_tier: nil,
+              maximum_bytes_billed: nil,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
               job_id: nil,
@@ -358,6 +360,12 @@ module Kura
       if dry_run
         configuration.dry_run = true
         wait = nil
+      end
+      if maximum_billing_tier
+        configuration.query.maximum_billing_tier = maximum_billing_tier
+      end
+      if maximum_bytes_billed
+        configuration.query.maximum_bytes_billed = maximum_bytes_billed
       end
       if dataset_id and table_id
         configuration.query.destination_table = Google::Apis::BigqueryV2::TableReference.new({ project_id: project_id, dataset_id: dataset_id, table_id: table_id })
