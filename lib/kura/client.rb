@@ -93,12 +93,12 @@ module Kura
       all = normalize_parameter(all)
       if blk
         @api.list_datasets(project_id, all: all, max_results: limit) do |result, err|
-          result &&= result.datasets
+          result &&= (result.datasets || [])
           blk.call(result, err)
         end
       else
         result = @api.list_datasets(project_id, all: all, max_results: limit)
-        result.datasets
+        result.datasets || []
       end
     rescue
       process_error($!)
@@ -150,12 +150,12 @@ module Kura
     def tables(dataset_id, project_id: @default_project_id, limit: 1000, &blk)
       if blk
         @api.list_tables(project_id, dataset_id, max_results: limit) do |result, err|
-          result &&= result.tables
+          result &&= (result.tables || [])
           blk.call(result, err)
         end
       else
         result = @api.list_tables(project_id, dataset_id, max_results: limit)
-        result.tables
+        result.tables || []
       end
     rescue
       process_error($!)

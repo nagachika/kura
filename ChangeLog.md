@@ -1,3 +1,9 @@
+# 0.2.20
+
+## Incompatible Changes
+
+* `datasts` and `tables` now return `[]` instead of nil if there's no entry.
+
 # 0.2.19
 
 ## Fixes
