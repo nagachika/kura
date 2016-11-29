@@ -385,6 +385,31 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_query_with_DML
+    dataset = "_Kura_test"
+    table = "Kura_query_DML"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    # create table with a target row
+    assert_nothing_raised do
+      @client.query("SELECT 42 as a", dataset_id: dataset, table_id: table, wait: 120)
+    end
+
+    q = %[UPDATE #{dataset}.#{table} SET a = 72 WHERE TRUE]
+
+    job = nil
+    assert_nothing_raised do
+      job = @client.query(q, mode: nil, allow_large_results: false, use_legacy_sql: false, wait: 120)
+    end
+
+    assert_equal({next_token: nil, rows: [{"a"=>"72"}], total_rows: 1}, @client.list_tabledata(dataset, table))
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_query_with_maximum_billing_tier
     dataset = "_Kura_test"
     table = "Kura_query_with_maximum_billing_tier"

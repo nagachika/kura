@@ -345,11 +345,9 @@ module Kura
               wait: nil,
               dry_run: false,
               &blk)
-      write_disposition = mode_to_write_disposition(mode)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
         query: Google::Apis::BigqueryV2::JobConfigurationQuery.new({
           query: sql,
-          write_disposition: write_disposition,
           allow_large_results: normalize_parameter(allow_large_results),
           flatten_results: normalize_parameter(flatten_results),
           priority: priority,
@@ -357,6 +355,9 @@ module Kura
           use_legacy_sql: use_legacy_sql,
         })
       })
+      if mode
+        configuration.query.write_disposition = mode_to_write_disposition(mode)
+      end
       if dry_run
         configuration.dry_run = true
         wait = nil

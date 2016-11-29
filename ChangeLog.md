@@ -1,3 +1,10 @@
+# 0.2.22
+
+## Enhancements
+
+* Support DML queries.
+  You shold pass `mode: nil` and `allow_large_results: false` explicitly to Kura::Client#query.
+
 # 0.2.21
 
 ## Incompatible Changes
