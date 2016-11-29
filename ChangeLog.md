@@ -28,7 +28,7 @@
 
 ## Enhancements
 
-* Add keyworkd argument `use_legacy_sql` to Kura::Client#insert_table to
+* Add keyword argument `use_legacy_sql` to Kura::Client#insert_table to
   support create View with Standard SQL.
 
 # 0.2.17
@@ -71,7 +71,7 @@
 ## Enhancements
 
 * Support job APIs in batch requests.
-  Until now load/query/extract/copy methods reiceived block to be yielded when
+  Until now load/query/extract/copy methods received block to be yielded when
   the keyword argument :wait was specified and polling every second.
   In batch request (in block of Kura::Client#batch), you cannot specified :wait
   keyword argument and block will be yielded when batch response are passed.
@@ -127,7 +127,7 @@
 
 ## Enhancements
 
-* Add Kura::Client#batch and support Baches API call for #projects, #datasets, #dataset,
+* Add Kura::Client#batch and support Batches API call for #projects, #datasets, #dataset,
   #tables, #table, #list\_tabledata. The results of these api call are passwed to blocks.
   See also https://github.com/google/google-api-ruby-client#batches
   The job insertion methods (load, query, extract, copy) are not supported to call in batch's block.
@@ -209,10 +209,10 @@
 ## Incompatible Changes
 
 * Kura::Client#load: 3rd argument `source_uris` is now optional (default value is nil)
-  because is is not required on multipart upload. `source_uris` and keyworkd argument `file` is exclusive.
+  because is is not required on multipart upload. `source_uris` and keyword argument `file` is exclusive.
 * Kura::Client#load: 4th argument `schema` become keyword argument. It is marked as [Optional] in
   [API Reference](https://cloud.google.com/bigquery/docs/reference/v2/jobs#configuration.load.schema)
-* Kura::Client#query: 1st and 2nd argument `dataset_id`, `table_id` become keyord argument.
+* Kura::Client#query: 1st and 2nd argument `dataset_id`, `table_id` become keyword argument.
   destinationTable is an [Optional] parameter.
 
 ## Enhancements
