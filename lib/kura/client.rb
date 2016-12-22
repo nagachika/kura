@@ -182,7 +182,7 @@ module Kura
                      friendly_name: nil, schema: nil, description: nil,
                      query: nil, external_data_configuration: nil,
                      use_legacy_sql: true,
-                     time_partitioning: { type: "DAY" },
+                     time_partitioning: nil,
                      &blk)
       if expiration_time
         expiration_time = (expiration_time.to_f * 1000.0).to_i

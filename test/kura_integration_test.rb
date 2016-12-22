@@ -198,6 +198,30 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_insert_partitioned_table
+    dataset = "_Kura_test"
+    table = "insert_partitioned_table"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    query = "SELECT COUNT(*) FROM [publicdata:samples.wikipedia];"
+    power_assert do
+      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}], time_partitioning: { type: "DAY" })
+    end
+    t = @client.table(dataset, table)
+    power_assert do
+      t.table_reference.dataset_id == dataset
+    end
+    power_assert do
+      t.table_reference.table_id == table
+    end
+    power_assert do
+      t.time_partitioning.type == "DAY"
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_patch_table
     dataset = "_Kura_test"
     table = "patch_table"
