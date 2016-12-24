@@ -1,3 +1,9 @@
+# 0.2.24
+
+## Enhancements
+
+* Add keyword argument `page_token` to `tables`.
+
 # 0.2.23
 
 ## Enhancements

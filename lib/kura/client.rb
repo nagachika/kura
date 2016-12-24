@@ -147,14 +147,14 @@ module Kura
       process_error($!)
     end
 
-    def tables(dataset_id, project_id: @default_project_id, limit: 1000, &blk)
+    def tables(dataset_id, project_id: @default_project_id, limit: 1000, page_token: nil, &blk)
       if blk
-        @api.list_tables(project_id, dataset_id, max_results: limit) do |result, err|
+        @api.list_tables(project_id, dataset_id, max_results: limit, page_token: page_token) do |result, err|
           result &&= (result.tables || [])
           blk.call(result, err)
         end
       else
-        result = @api.list_tables(project_id, dataset_id, max_results: limit)
+        result = @api.list_tables(project_id, dataset_id, max_results: limit, page_token: page_token)
         result.tables || []
       end
     rescue
