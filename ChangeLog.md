@@ -1,3 +1,9 @@
+# 0.2.25
+
+## Enhancements
+
+* `Kura::Client#list_tabledata` now support REPEATED/RECORD field and convert data into appropriate type of object.
+
 # 0.2.24
 
 ## Enhancements

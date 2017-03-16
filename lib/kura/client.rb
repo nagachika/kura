@@ -229,18 +229,43 @@ module Kura
       process_error($!)
     end
 
-    def format_tabledata(r, field_names)
+    def _convert_tabledata_field(x, field_info)
+      if x.nil? and field_info["mode"] == "NULLABLE"
+        return nil
+      end
+      case field_info["type"]
+      when "STRING"
+        x.to_s
+      when "INTEGER"
+        Integer(x)
+      when "FLOAT"
+        Float(x)
+      when "BOOLEAN"
+        x.to_s == "true"
+      when "RECORD"
+        _convert_tabledata_row(x, field_info["fields"])
+      else
+        x
+      end
+    end
+
+    def _convert_tabledata_row(row, schema)
+      (row.respond_to?(:f) ? row.f : row["f"]).zip(schema).each_with_object({}) do |(v, s), tbl|
+        v = JSON.parse(v.to_json)
+        if s["mode"] == "REPEATED"
+          tbl[s["name"]] = v["v"].map{|c| _convert_tabledata_field(c["v"], s) }
+        else
+          tbl[s["name"]] = _convert_tabledata_field(v["v"], s)
+        end
+      end
+    end
+
+    def format_tabledata(r, schema)
       {
         total_rows: r.total_rows.to_i,
         next_token: r.page_token,
         rows: (r.rows || []).map do |row|
-          row.f.zip(field_names).each_with_object({}) do |(v, fn), tbl|
-            if v.v.is_a?(Array)
-              tbl[fn] = v.v.map{|c| c["v"] }
-            else
-              tbl[fn] = v.v
-            end
-          end
+          _convert_tabledata_row(row, schema)
         end
       }
     end
@@ -248,18 +273,18 @@ module Kura
 
     def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil, &blk)
       schema ||= table(dataset_id, table_id, project_id: project_id).schema.fields
-      field_names = schema.map{|f| f.respond_to?(:[]) ? (f["name"] || f[:name]) : f.name }
+      schema = schema.map{|s| JSON.parse(s.to_json) }
 
       if blk
         @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token) do |r, err|
           if r
-            r = format_tabledata(r, field_names)
+            r = format_tabledata(r, schema)
           end
           blk.call(r, err)
         end
       else
         r = @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token)
-        format_tabledata(r, field_names)
+        format_tabledata(r, schema)
       end
     rescue
       process_error($!)

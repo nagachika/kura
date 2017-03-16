@@ -270,6 +270,58 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_match(/invalid:dataset/, err.message)
   end
 
+  def test_list_tabledata_with_repeated_record_table
+    dataset = "_Kura_test"
+    table = "repeated_record_table"
+    # prepare table with REPEATED, RECORD schema
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    schema = [
+      { name: "str", type: "STRING", mode: "NULLABLE" },
+      { name: "int", type: "INTEGER", mode: "NULLABLE" },
+      { name: "float", type: "FLOAT", mode: "NULLABLE" },
+      { name: "bool", type: "BOOLEAN", mode: "NULLABLE" },
+      { name: "fary", type: "FLOAT", mode: "REPEATED" },
+      { name: "obj", type: "RECORD", mode: "NULLABLE", fields: [
+        { name: "key1", type: "STRING", mode: "NULLABLE" },
+        { name: "key2", type: "STRING", mode: "NULLABLE" },
+      ]},
+      { name: "oary", type: "RECORD", mode: "REPEATED", fields: [
+        { name: "key1", type: "STRING", mode: "NULLABLE" },
+        { name: "key2", type: "STRING", mode: "NULLABLE" },
+      ]}
+    ]
+    obj = {
+      "str" => "Hello, BigQuery!",
+      "int" => 42,
+      "float" => 0.25,
+      "bool" => true,
+      "fary" => [ 0.25, 0.5 ],
+      "obj" => { "key1" => "aaa", "key2" => "bbb" },
+      "oary" => [
+        { "key1" => "AAA", "key2" => "BBB" },
+        { "key1" => "CCC", "key2" => "DDD" }
+      ]
+    }
+    io = StringIO.new(obj.to_json + "\n")
+    job_id = SecureRandom.uuid
+    job = nil
+    assert_nothing_raised do
+      job = @client.load(dataset, table, schema: schema, file: io, mode: :truncate, job_id: job_id, source_format: "NEWLINE_DELIMITED_JSON")
+      job.wait(300)
+    end
+    power_assert do
+      @client.list_tabledata(dataset, table)[:total_rows] == 1
+      @client.list_tabledata(dataset, table)[:rows].size == 1
+    end
+    power_assert do
+      @client.list_tabledata(dataset, table)[:rows][0] == obj
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_list_tabledata_with_invalid_dataset
     err = assert_raise(Kura::ApiError) { @client.list_tabledata("invalid:dataset", "nonexist", schema: [{"name": "f1"}]) }
     # 2016-03-02: Currently BigQuery API tabledata.list behavior changed to return notFound for invalid dataset id
@@ -305,7 +357,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     job = @client.query("SELECT * from [#{dataset}.#{table}] LIMIT 100", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
     dest = job.configuration.query.destination_table
     power_assert do
-      @client.list_tabledata(dest.dataset_id, dest.table_id) == { total_rows: 1, next_token: nil, rows: [{"n" => "42", "s" => "Hello, World!"}] }
+      @client.list_tabledata(dest.dataset_id, dest.table_id) == { total_rows: 1, next_token: nil, rows: [{"n" => 42, "s" => "Hello, World!"}] }
     end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
@@ -333,7 +385,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       job.job_reference.job_id == job_id
     end
 
-    assert_equal({next_token: nil, rows: [{"f0_"=>"313797035"}], total_rows: 1}, @client.list_tabledata(dataset, table))
+    assert_equal({next_token: nil, rows: [{"f0_"=>313797035}], total_rows: 1}, @client.list_tabledata(dataset, table))
     @client.delete_table(dataset, table)
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
@@ -428,7 +480,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       job = @client.query(q, mode: nil, allow_large_results: false, use_legacy_sql: false, wait: 120)
     end
 
-    assert_equal({next_token: nil, rows: [{"a"=>"72"}], total_rows: 1}, @client.list_tabledata(dataset, table))
+    assert_equal({next_token: nil, rows: [{"a"=>72}], total_rows: 1}, @client.list_tabledata(dataset, table))
     @client.delete_table(dataset, table)
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
@@ -614,8 +666,8 @@ class KuraIntegrationTest < Test::Unit::TestCase
     jobs.map! do |j|
       j = j.wait(120)
     end
-    assert_equal(@client.list_tabledata(jobs[0].configuration.query.destination_table.dataset_id, jobs[0].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "a" => "0" }] })
-    assert_equal(@client.list_tabledata(jobs[1].configuration.query.destination_table.dataset_id, jobs[1].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "b" => "1" }] })
+    assert_equal(@client.list_tabledata(jobs[0].configuration.query.destination_table.dataset_id, jobs[0].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "a" => 0 }] })
+    assert_equal(@client.list_tabledata(jobs[1].configuration.query.destination_table.dataset_id, jobs[1].configuration.query.destination_table.table_id), { total_rows: 1, next_token: nil, rows: [{ "b" => 1 }] })
   end
 
   def test_copy
