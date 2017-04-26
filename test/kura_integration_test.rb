@@ -611,8 +611,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
     err = assert_raise(Kura::ApiError) { @client.wait_job(jobid) }
     power_assert do
-      err.reason == "stopped" and
-      err.message =~ /Job cancel was requested./
+      err.reason == "stopped" and err.message =~ /Job cancel was requested./
     end
   end
 
