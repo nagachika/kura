@@ -1,3 +1,9 @@
+# 0.2.26
+
+## Changes
+
+* Relax version dependency of google-api-client.gem. kura works find with 0.10.x seriese.
+
 # 0.2.25
 
 ## Enhancements
