@@ -580,8 +580,9 @@ module Kura
       end
       if blk
         @api.cancel_job(project_id, jobid) do |r, e|
-          r.job.kura_api = self if r.job
-          blk.call(r.job, e)
+          j = (r && r.job)
+          j.kura_api = self if j
+          blk.call(j, e)
         end
       else
         @api.cancel_job(project_id, jobid).job.tap{|j| j.kura_api = self if j }

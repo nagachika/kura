@@ -1,3 +1,9 @@
+# 0.2.27
+
+## Fixes
+
+* Fix NoMethodError in `cancel_job` inside batch request.
+
 # 0.2.26
 
 ## Changes

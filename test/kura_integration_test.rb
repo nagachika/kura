@@ -648,6 +648,15 @@ class KuraIntegrationTest < Test::Unit::TestCase
         assert_nil(result)
       end
     end
+    job = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
+    @client.batch do
+      @client.cancel_job(job.job_reference.job_id) do |job, err|
+        assert_nil(err)
+        power_assert do
+          job.is_a?(Google::Apis::BigqueryV2::Job)
+        end
+      end
+    end
   end
 
   def test_batch_job_insert
