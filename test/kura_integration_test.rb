@@ -523,7 +523,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       job = @client.query(q, dataset_id: dataset, table_id: table, maximum_bytes_billed: 0, wait: 120)
     end
 
-    assert_equal(job.configuration.query.maximum_bytes_billed, "0")
+    assert_equal(0, Integer(job.configuration.query.maximum_bytes_billed))
 
     q = %{SELECT * FROM publicdata:samples.wikipedia;}
     job = nil

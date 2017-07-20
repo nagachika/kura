@@ -28,7 +28,16 @@ module Kura
         auth.fetch_access_token!
       end
       Google::Apis::RequestOptions.default.retries = default_retries
-      Google::Apis::RequestOptions.default.timeout_sec = http_options[:timeout]
+      # to support google-api-client.gem both 0.10.x and 0.11.x
+      # see https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md
+      if Google::Apis::ClientOptions.default.respond_to?(:open_timeout_sec)
+        Google::Apis::ClientOptions.default.open_timeout_sec = http_options[:timeout]
+        Google::Apis::ClientOptions.default.read_timeout_sec = http_options[:timeout]
+        Google::Apis::ClientOptions.default.send_timeout_sec = http_options[:timeout]
+      else
+        Google::Apis::RequestOptions.default.open_timeout_sec = http_options[:timeout]
+        Google::Apis::RequestOptions.default.timeout_sec = http_options[:timeout]
+      end
       @api = Google::Apis::BigqueryV2::BigqueryService.new
       @api.authorization = auth
 

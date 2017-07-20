@@ -1,3 +1,9 @@
+# 0.2.28
+
+## Enhancements
+
+* Support google-api-client.gem v0.11.x series.
+
 # 0.2.27
 
 ## Fixes
@@ -8,7 +14,7 @@
 
 ## Changes
 
-* Relax version dependency of google-api-client.gem. kura works find with 0.10.x seriese.
+* Relax version dependency of google-api-client.gem. kura works fine with 0.10.x series.
 
 # 0.2.25
 
