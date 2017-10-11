@@ -1,3 +1,9 @@
+# 0.2.29
+
+## Enhancements
+
+* Support google-api-client.gem v0.13.x, v0.14.x, v0.15.x series.
+
 # 0.2.28
 
 ## Enhancements
