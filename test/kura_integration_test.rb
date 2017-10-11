@@ -111,7 +111,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
   def test_insert_table
     dataset = "_Kura_test"
-    table = "insert_table"
+    table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
     end
@@ -140,7 +140,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
   def test_insert_table_view
     dataset = "_Kura_test"
-    table = "insert_table"
+    table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
     end
@@ -170,7 +170,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
   def test_insert_table_view_with_standard_sql
     dataset = "_Kura_test"
-    table = "insert_table"
+    table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
     end
@@ -346,7 +346,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
   def test_insert_tabledata
     dataset = "_Kura_test"
-    table = "insert_table"
+    table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
     end
@@ -564,9 +564,10 @@ class KuraIntegrationTest < Test::Unit::TestCase
     power_assert do
       "#{@project_id}:#{dataset}.#{table}" == @client.table(dataset, table).id
     end
-    power_assert do
-      @client.list_tabledata(dataset, table) == {total_rows: 2, next_token: nil, rows: [{"f1" => "aaa", "f2" => "bbb"},{"f1" => "ccc", "f2" => "ddd"}]}
-    end
+    result = @client.list_tabledata(dataset, table)
+    assert_equal(2, result[:total_rows])
+    assert_nil(result[:next_token])
+    assert_equal([{"f1" => "aaa", "f2" => "bbb"},{"f1" => "ccc", "f2" => "ddd"}], result[:rows].sort_by{|i| i["f1"]})
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
   end
