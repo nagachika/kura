@@ -1,3 +1,9 @@
+# 0.2.30
+
+## Enhancements
+
+* Support google-api-client.gem v0.15.x series (fix commit miss).
+
 # 0.2.29
 
 ## Enhancements
