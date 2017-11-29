@@ -456,6 +456,7 @@ module Kura
              allow_quoted_newlines: false,
              quote: '"', skip_leading_rows: 0,
              source_format: "CSV",
+             autodetect: false,
              project_id: @default_project_id,
              job_project_id: @default_project_id,
              job_id: nil,
@@ -490,6 +491,9 @@ module Kura
         configuration.load.allow_quoted_newlines = normalize_parameter(allow_quoted_newlines)
         configuration.load.quote = quote
         configuration.load.skip_leading_rows = skip_leading_rows
+        configuration.load.autodetect = autodetect
+      elsif source_format == "NEWLINE_DELIMITED_JSON"
+        configuration.load.autodetect = autodetect
       end
       unless file
         configuration.load.source_uris = source_uris
