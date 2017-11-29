@@ -719,4 +719,55 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
     assert_match(/Can not include media requests in batch/i, err.message)
   end
+    
+  def test_load_schema_autodetect
+    expected = [
+      { name: "str", type: "STRING", mode: "NULLABLE" },
+      { name: "int", type: "INTEGER", mode: "NULLABLE" },
+      { name: "float", type: "FLOAT", mode: "NULLABLE" },
+      { name: "bool", type: "BOOLEAN", mode: "NULLABLE" },
+      { name: "fary", type: "FLOAT", mode: "REPEATED" },
+      { name: "obj", type: "RECORD", mode: "NULLABLE", fields: [
+        { name: "key1", type: "STRING", mode: "NULLABLE" },
+      ]},
+      { name: "oary", type: "RECORD", mode: "REPEATED", fields: [
+        { name: "key2", type: "STRING", mode: "NULLABLE" },
+      ]}
+    ]
+    obj = {
+      "str" => "Hello, BigQuery!",
+      "int" => 42,
+      "float" => 0.25,
+      "bool" => true,
+      "fary" => [ 0.25, 0.5 ],
+      "obj" => { "key1" => "value1" },
+      "oary" => [{ "key2" => "value2" }]
+    }
+    io = StringIO.new(obj.to_json + "\n")
+    options = {
+      source_format: "NEWLINE_DELIMITED_JSON",
+      file: io,
+      autodetect: true,
+    }
+    dataset = "_Kura_test"
+    table = "Kura_load_schema_autodetect_test"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    assert_nothing_raised do
+      @client.load(dataset, table, **options, wait: 300)
+    end
+    @client.table(dataset, table).tap do |tbl|
+      assert_equal(tbl.table_reference.dataset_id, dataset)
+      assert_equal(tbl.table_reference.table_id, table)
+      tbl.schema.fields.each do |f|
+        assert_includes(expected, f.to_h)
+      end
+    end
+    power_assert do
+      @client.list_tabledata(dataset, table) == {total_rows: 1, next_token: nil, rows: [obj]}
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
 end if File.readable?(ServiceAccountFilesPath)
