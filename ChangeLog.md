@@ -1,3 +1,10 @@
+# 0.2.31
+
+## Enhancements
+
+* Add `autodetect` keyword argument to `load`.
+* Support google-api-client.gem v0.16.x and v0.17.x series.
+
 # 0.2.30
 
 ## Enhancements
