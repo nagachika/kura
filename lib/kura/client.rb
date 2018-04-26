@@ -8,9 +8,9 @@ require "kura/extensions"
 
 module Kura
   class Client
-    def initialize(default_project_id: nil, email_address: nil, private_key: nil, http_options: {timeout: 60}, default_retries: 5)
+    def initialize(default_project_id: nil, email_address: nil, private_key: nil, scope: nil, http_options: {timeout: 60}, default_retries: 5)
       @default_project_id = default_project_id
-      @scope = "https://www.googleapis.com/auth/bigquery"
+      @scope = ["https://www.googleapis.com/auth/bigquery"] | (scope ? scope.is_a?(Array) ? scope : [scope] : [])
       @email_address = email_address
       @private_key = private_key
       if @email_address and @private_key
@@ -24,7 +24,7 @@ module Kura
         Faraday.default_connection.options.timeout = 60
         auth.fetch_access_token!
       else
-        auth = Google::Auth.get_application_default([@scope])
+        auth = Google::Auth.get_application_default(@scope)
         auth.fetch_access_token!
       end
       Google::Apis::RequestOptions.default.retries = default_retries

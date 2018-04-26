@@ -43,7 +43,7 @@ module Kura
   #     Kura.client(gcp_project_id, email_address, prm_file_contents)
   #     Kura.client(gcp_project_id, email_address, private_key_object)
   #
-  def self.client(project_id=nil, email_address=nil, private_key=nil, http_options: {timeout: 60})
+  def self.client(project_id=nil, email_address=nil, private_key=nil, scope: nil, http_options: {timeout: 60})
     if email_address.nil? and private_key.nil?
       if project_id.is_a?(String)
         credential = JSON.parse(File.binread(project_id))
@@ -58,6 +58,6 @@ module Kura
     elsif private_key
       private_key = get_private_key(private_key)
     end
-    self::Client.new(default_project_id: project_id, email_address: email_address, private_key: private_key, http_options: http_options)
+    self::Client.new(default_project_id: project_id, email_address: email_address, private_key: private_key, scope: scope, http_options: http_options)
   end
 end
