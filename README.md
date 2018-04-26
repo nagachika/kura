@@ -34,6 +34,9 @@ client = Kura.client(JSON.parse(File.read(json_file_path)))
 
 # b. With GCE bigquery scope (Only available on Google Compute Engine instance)
 client = Kura.client
+
+# c. With External Data Sources. For example, accessing data hosted within Google Drive requires an additional OAuth scope.
+client = Kura.client(.., scope: "https://www.googleapis.com/auth/drive")
 ```
 
 ### Job API
@@ -49,6 +52,7 @@ client.copy("src_dataset", "src_table", "dest_dataset", "dest_table", wait: 120)
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/nagachika/kura.
 
+> Memo: If run to google sheets testing requires environment variable `ENV['GOOGLE_SHEETS_FILE_URL']`.
 
 ## License
 
