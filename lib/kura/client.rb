@@ -378,6 +378,7 @@ module Kura
               use_legacy_sql: true,
               maximum_billing_tier: nil,
               maximum_bytes_billed: nil,
+              external_data_configuration: nil,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
               job_id: nil,
@@ -419,6 +420,9 @@ module Kura
             Google::Apis::BigqueryV2::UserDefinedFunctionResource.new({ inline_code: r })
           end
         end
+      end
+      if external_data_configuration
+        configuration.query.table_definitions = external_data_configuration
       end
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
