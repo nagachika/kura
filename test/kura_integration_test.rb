@@ -9,7 +9,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     service_account = JSON.parse(File.binread(ServiceAccountFilesPath))
     @project_id = service_account["project_id"]
 
-    @client = Kura.client(service_account)
+    @client = Kura.client(service_account, scope: "https://www.googleapis.com/auth/drive")
 
     # for reduce power_assert display
     def @client.inspect
@@ -198,6 +198,40 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_insert_table_external
+    if ENV['GOOGLE_SHEETS_FILE_URL']
+      begin
+        dataset = "_Kura_test"
+        table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"
+        unless @client.dataset(dataset)
+          @client.insert_dataset(dataset)
+        end
+        external_data_configuration = {
+          autodetect: true,
+          source_format: "GOOGLE_SHEETS",
+          source_uris: [ENV['GOOGLE_SHEETS_FILE_URL']],
+        }
+        power_assert do
+          @client.insert_table(dataset, table, external_data_configuration: external_data_configuration)
+        end
+        t = @client.table(dataset, table)
+        power_assert do
+          t.table_reference.dataset_id == dataset
+        end
+        power_assert do
+          t.table_reference.table_id == table
+        end
+        power_assert do
+          t.type == "EXTERNAL"
+        end
+      ensure
+        @client.delete_dataset(dataset, delete_contents: true)
+      end
+    else
+      omit("This test requires environment variable 'GOOGLE_SHEETS_FILE_URL'")
+    end
+  end
+
   def test_insert_partitioned_table
     dataset = "_Kura_test"
     table = "insert_partitioned_table"
@@ -361,6 +395,57 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_query_to_external_table
+    if ENV['GOOGLE_SHEETS_FILE_URL']
+      begin
+        dataset = "_Kura_test"
+        table = "Kura_query_external_result"
+        unless @client.dataset(dataset)
+          @client.insert_dataset(dataset)
+        end
+        external_data_configuration = {
+          autodetect: true,
+          source_format: "GOOGLE_SHEETS",
+          source_uris: [ENV['GOOGLE_SHEETS_FILE_URL']],
+        }
+        @client.insert_table(dataset, table, external_data_configuration: external_data_configuration)
+        sleep 5
+        job = @client.query("SELECT * FROM [#{dataset}.#{table}];", allow_large_results: false, wait: 10)
+        dest = job.configuration.query.destination_table
+        result = @client.list_tabledata(dest.dataset_id, dest.table_id)
+        assert_not_equal(0, result[:total_rows])
+        assert_not_equal(0, result[:rows].length)
+        result[:rows].each {|row| assert_equal(true, row.is_a?(Hash))}
+      ensure
+        @client.delete_table(dataset, table)
+        @client.delete_dataset(dataset, delete_contents: true)
+      end
+    else
+      omit("This test requires environment variable 'GOOGLE_SHEETS_FILE_URL'")
+    end
+  end
+
+  def test_query_to_external_datasource
+    if ENV['GOOGLE_SHEETS_FILE_URL']
+      tmp_table = "tmp"
+      external_data_configuration = {
+        tmp_table => {
+          autodetect: true,
+          source_format: "GOOGLE_SHEETS",
+          source_uris: [ENV['GOOGLE_SHEETS_FILE_URL']],
+        }
+      }
+      job = @client.query("SELECT * FROM #{tmp_table};", allow_large_results: false, external_data_configuration: external_data_configuration, wait: 10)
+      dest = job.configuration.query.destination_table
+      result = @client.list_tabledata(dest.dataset_id, dest.table_id)
+      assert_not_equal(0, result[:total_rows])
+      assert_not_equal(0, result[:rows].length)
+      result[:rows].each {|row| assert_equal(true, row.is_a?(Hash))}
+    else
+      omit("This test requires environment variable 'GOOGLE_SHEETS_FILE_URL'")
+    end
   end
 
   def test_query_with_invalid_dataset

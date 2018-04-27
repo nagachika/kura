@@ -8,9 +8,9 @@ require "kura/extensions"
 
 module Kura
   class Client
-    def initialize(default_project_id: nil, email_address: nil, private_key: nil, http_options: {timeout: 60}, default_retries: 5)
+    def initialize(default_project_id: nil, email_address: nil, private_key: nil, scope: nil, http_options: {timeout: 60}, default_retries: 5)
       @default_project_id = default_project_id
-      @scope = "https://www.googleapis.com/auth/bigquery"
+      @scope = ["https://www.googleapis.com/auth/bigquery"] | (scope ? scope.is_a?(Array) ? scope : [scope] : [])
       @email_address = email_address
       @private_key = private_key
       if @email_address and @private_key
@@ -24,7 +24,7 @@ module Kura
         Faraday.default_connection.options.timeout = 60
         auth.fetch_access_token!
       else
-        auth = Google::Auth.get_application_default([@scope])
+        auth = Google::Auth.get_application_default(@scope)
         auth.fetch_access_token!
       end
       Google::Apis::RequestOptions.default.retries = default_retries
@@ -378,6 +378,7 @@ module Kura
               use_legacy_sql: true,
               maximum_billing_tier: nil,
               maximum_bytes_billed: nil,
+              external_data_configuration: nil,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
               job_id: nil,
@@ -419,6 +420,9 @@ module Kura
             Google::Apis::BigqueryV2::UserDefinedFunctionResource.new({ inline_code: r })
           end
         end
+      end
+      if external_data_configuration
+        configuration.query.table_definitions = external_data_configuration
       end
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
