@@ -1,3 +1,10 @@
+# 0.2.32
+
+## Enhancements
+
+* Support `external_data_configuration` option.
+* Add `scope` keyword argument to Kura::Client.new.
+
 # 0.2.31
 
 ## Enhancements
