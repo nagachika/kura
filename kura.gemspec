@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["nagachika@ruby-lang.org"]
 
   spec.summary       = %q{Interface to BigQuery API v2.}
-  spec.description   = %q{Kura is an interfece to BigQuery API v2. It is a wrapper of google-api-client.}
+  spec.description   = %q{Kura is an interface to BigQuery API v2. It is a wrapper of google-api-client.}
   spec.homepage      = "https://github.com/nagachika/kura/"
   spec.license       = "MIT"
 
