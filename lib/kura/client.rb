@@ -248,7 +248,16 @@ module Kura
       when "INTEGER"
         Integer(x)
       when "FLOAT"
-        Float(x)
+        case x
+        when "Infinity"
+          Float::INFINITY
+        when "-Infinity"
+          -Float::INFINITY
+        when "NaN"
+          Float::NAN
+        else
+          Float(x)
+        end
       when "BOOLEAN"
         x.to_s == "true"
       when "RECORD"

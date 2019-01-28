@@ -1,3 +1,9 @@
+# 0.2.33
+
+## Fixes
+
+* Fix `list_tabledata` to handle "Infinity" and "NaN" value in FLOAT columns.
+
 # 0.2.32
 
 ## Enhancements
