@@ -1,3 +1,9 @@
+# 0.3.0
+
+## Enhancements
+
+* Support [Models API](https://cloud.google.com/bigquery/docs/reference/rest/v2/models) to manipulate BigQuery ML models.
+
 # 0.2.33
 
 ## Fixes

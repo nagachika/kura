@@ -654,5 +654,43 @@ module Kura
       end
       raise Kura::TimeoutError, "wait job timeout"
     end
+
+    # Models API
+    def models(dataset_id, project_id: @default_project_id, limit: 1000, page_token: nil, &blk)
+      if blk
+        @api.list_models(project_id, dataset_id, max_results: limit, page_token: page_token) do |result, err|
+          result &&= (result.models || [])
+          blk.call(result, err)
+        end
+      else
+        @api.list_models(project_id, dataset_id, max_results: limit, page_token: page_token)
+      end
+    rescue
+      process_error($!)
+    end
+
+    def model(dataset_id, model_id, project_id: @default_project_id, &blk)
+      if blk
+        @api.get_model(project_id, dataset_id, model_id) do |result, err|
+          if err.respond_to?(:status_code) and err.status_code == 404
+            result = nil
+            err = nil
+          end
+          blk.call(result, err)
+        end
+      else
+        @api.get_model(project_id, dataset_id, model_id)
+      end
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
+    end
+
+    def delete_model(dataset_id, model_id, project_id: @default_project_id, &blk)
+      @api.delete_model(project_id, dataset_id, model_id, &blk)
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
+    end
   end
 end
