@@ -174,7 +174,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
     end
-    query = "SELECT COUNT(*) FROM `publicdata:samples.wikipedia`;"
+    query = "SELECT COUNT(*) FROM `publicdata.samples.wikipedia`;"
     power_assert do
       @client.insert_table(dataset, table, query: query, use_legacy_sql: false)
     end
@@ -859,6 +859,74 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
     power_assert do
       @client.list_tabledata(dataset, table) == {total_rows: 1, next_token: nil, rows: [obj]}
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def create_bq_model(dataset_id, model_id)
+    create_linear_reg_sql = <<~END
+      #standardSQL
+      CREATE MODEL `#{dataset_id}.#{model_id}`
+      OPTIONS(model_type='linear_reg') AS
+      SELECT
+        label,
+        feature
+      FROM
+        (SELECT 0 as label, 0 as feature) UNION ALL
+        (SELECT 1 as label, 1 as feature)
+    END
+    @client.query(create_linear_reg_sql, mode: nil, allow_large_results: false, use_legacy_sql: false, priority: "INTERACTIVE", wait: 600)
+  end
+
+  def test_list_models
+    dataset = "_Kura_test"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    create_bq_model(dataset, "model1")
+    list_result = @client.models(dataset)
+    power_assert do
+      list_result.models.size == 1
+    end
+    power_assert do
+      list_result.models[0].model_reference.to_h == { project_id: @project_id, dataset_id: dataset, model_id: "model1" }
+    end
+    assert_equal(nil, list_result.next_page_token)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_get_model
+    dataset = "_Kura_test"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    create_bq_model(dataset, "model1")
+    result = @client.model(dataset, "model1")
+    power_assert do
+      result.model_reference.to_h == { project_id: @project_id, dataset_id: dataset, model_id: "model1" }
+    end
+    power_assert do
+      @client.model(dataset, "model_not_exists") == nil
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_delete_model
+    dataset = "_Kura_test"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    create_bq_model(dataset, "model1")
+    @client.delete_model(dataset, "model1")
+
+    power_assert do
+      @client.model(dataset, "model1") == nil
+    end
+    power_assert do
+      @client.delete_model(dataset, "model1") == nil
     end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)

@@ -1,3 +1,13 @@
+# 0.3.0
+
+## Enhancements
+
+* Support [Models API](https://cloud.google.com/bigquery/docs/reference/rest/v2/models) to manipulate BigQuery ML models.
+
+## Changes
+
+* Update version dependency of google-api-client.gem to support BigQuery Models API.
+
 # 0.2.33
 
 ## Fixes
