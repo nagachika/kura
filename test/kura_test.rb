@@ -26,7 +26,7 @@ class KuraTest < Test::Unit::TestCase
   def test_get_private_key_from_file
     rsa = OpenSSL::PKey::RSA.generate(2048)
     str = rsa.to_pem
-    tmpfile = Tempfile.open("kura-test") do |f|
+    Tempfile.open("kura-test") do |f|
       f.puts(str)
       f.close
 
@@ -37,7 +37,7 @@ class KuraTest < Test::Unit::TestCase
   def test_get_private_key_from_pathname
     rsa = OpenSSL::PKey::RSA.generate(2048)
     str = rsa.to_pem
-    tmpfile = Tempfile.open("kura-test") do |f|
+    Tempfile.open("kura-test") do |f|
       f.puts(str)
       f.close
 
