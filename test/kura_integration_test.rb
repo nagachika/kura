@@ -238,7 +238,6 @@ class KuraIntegrationTest < Test::Unit::TestCase
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
     end
-    query = "SELECT COUNT(*) FROM [publicdata:samples.wikipedia];"
     power_assert do
       @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}], time_partitioning: { type: "DAY" })
     end
@@ -346,7 +345,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       job.wait(300)
     end
     power_assert do
-      @client.list_tabledata(dataset, table)[:total_rows] == 1
+      @client.list_tabledata(dataset, table)[:total_rows] == 1 and
       @client.list_tabledata(dataset, table)[:rows].size == 1
     end
     power_assert do
@@ -543,9 +542,8 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
     q = %{(SELECT "a" as col) UNION DISTINCT (SELECT "b" as col) UNION DISTINCT (SELECT "a" as col) ORDER BY col;}
 
-    job = nil
     assert_nothing_raised do
-      job = @client.query(q, dataset_id: dataset, table_id: table, use_legacy_sql: false, wait: 120)
+      @client.query(q, dataset_id: dataset, table_id: table, use_legacy_sql: false, wait: 120)
     end
 
     assert_equal({next_token: nil, rows: [{"col"=>"a"},{"col"=>"b"}], total_rows: 2}, @client.list_tabledata(dataset, table))
@@ -568,9 +566,8 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
     q = %[UPDATE #{dataset}.#{table} SET a = 72 WHERE TRUE]
 
-    job = nil
     assert_nothing_raised do
-      job = @client.query(q, mode: nil, allow_large_results: false, use_legacy_sql: false, wait: 120)
+      @client.query(q, mode: nil, allow_large_results: false, use_legacy_sql: false, wait: 120)
     end
 
     assert_equal({next_token: nil, rows: [{"a"=>72}], total_rows: 1}, @client.list_tabledata(dataset, table))
@@ -744,10 +741,10 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
     job = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
     @client.batch do
-      @client.cancel_job(job.job_reference.job_id) do |job, err|
+      @client.cancel_job(job.job_reference.job_id) do |j, err|
         assert_nil(err)
         power_assert do
-          job.is_a?(Google::Apis::BigqueryV2::Job)
+          j.is_a?(Google::Apis::BigqueryV2::Job)
         end
       end
     end

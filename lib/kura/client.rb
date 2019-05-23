@@ -333,7 +333,7 @@ module Kura
         end
       end
 
-      r = @api.insert_all_table_data(project_id, dataset_id, table_id, request)
+      @api.insert_all_table_data(project_id, dataset_id, table_id, request)
     rescue
       process_error($!)
     end
