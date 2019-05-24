@@ -290,7 +290,14 @@ module Kura
     private :format_tabledata
 
     def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil, &blk)
-      schema ||= table(dataset_id, table_id, project_id: project_id).schema.fields
+      if schema.nil?
+        _t = table(dataset_id, table_id, project_id: project_id)
+        if _t
+          schema = table(dataset_id, table_id, project_id: project_id).schema.fields
+        else
+          raise Kura::ApiError.new("notFound", "Not found: Table #{project_id}:#{dataset_id}.#{table_id}")
+        end
+      end
       schema = schema.map{|s| JSON.parse(s.to_json) }
 
       if blk
