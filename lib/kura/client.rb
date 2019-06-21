@@ -239,7 +239,7 @@ module Kura
     end
 
     def _convert_tabledata_field(x, field_info)
-      if x.nil? and field_info["mode"] == "NULLABLE"
+      if x.nil? and (field_info["mode"] == "NULLABLE" or field_info["mode"].nil?) # The tables created by New BigQuery Console could have schema without mode...
         return nil
       end
       case field_info["type"]
