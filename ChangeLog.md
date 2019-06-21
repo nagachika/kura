@@ -1,3 +1,10 @@
+# 0.3.1
+
+## Enhancements
+
+* Handle table whose schema without 'mode' field. The tables created by New BigQuery Web Console could have such malformed schema.
+  Thanks for GCPUG Slack for notice this issue.
+
 # 0.3.0
 
 ## Enhancements
