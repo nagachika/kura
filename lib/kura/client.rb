@@ -131,7 +131,15 @@ module Kura
     end
 
     def insert_dataset(dataset_id, project_id: @default_project_id, &blk)
-      obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
+      case dataset_id
+      when String
+        obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
+      when Hash
+        obj = Google::Apis::BigqueryV2::Dataset.new(**dataset_id)
+      when Google::Apis::BigqueryV2::Dataset
+        obj = dataset_id
+      end
+
       @api.insert_dataset(project_id, obj, &blk)
     rescue
       process_error($!)

@@ -72,6 +72,21 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(@name) rescue nil
   end
 
+  def test_insert_dataset_with_location
+    @name = "Kura_test"
+
+    dataset = @client.dataset(@name)
+    assert_nil(dataset)
+
+    @client.insert_dataset({ dataset_reference: { dataset_id: @name }, location: "asia-northeast1" })
+    dataset = @client.dataset(@name)
+    assert_equal(@project_id, dataset.dataset_reference.project_id)
+    assert_equal(@name, dataset.dataset_reference.dataset_id)
+    assert_equal("asia-northeast1", dataset.location)
+  ensure
+    @client.delete_dataset(@name) rescue nil
+  end
+
   def test_tables
     @client.tables("samples", project_id: "publicdata").tap do |result|
       assert_equal(7, result.size)
