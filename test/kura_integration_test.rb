@@ -706,6 +706,19 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
   end
 
+  def test_cancel_job_with_location
+    job = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
+    job = @client.cancel_job(job.job_reference.job_id, location: job.job_reference.location)
+    power_assert do
+      # Sometimes jobs.cancel return "PENDING" job.
+      job.status.state == "DONE" or job.status.state == "PENDING"
+    end
+    err = assert_raise(Kura::ApiError) { @client.wait_job(job) }
+    power_assert do
+      err.reason == "stopped" and err.message =~ /Job execution was cancelled/
+    end
+  end
+
   def test_batch_call
     @client.batch do
       @client.tables("samples", project_id: "publicdata") do |result, err|
