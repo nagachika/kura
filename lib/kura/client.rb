@@ -131,7 +131,15 @@ module Kura
     end
 
     def insert_dataset(dataset_id, project_id: @default_project_id, &blk)
-      obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
+      case dataset_id
+      when String
+        obj = Google::Apis::BigqueryV2::Dataset.new(dataset_reference: Google::Apis::BigqueryV2::DatasetReference.new(project_id: project_id, dataset_id: dataset_id))
+      when Hash
+        obj = Google::Apis::BigqueryV2::Dataset.new(**dataset_id)
+      when Google::Apis::BigqueryV2::Dataset
+        obj = dataset_id
+      end
+
       @api.insert_dataset(project_id, obj, &blk)
     rescue
       process_error($!)
@@ -588,20 +596,20 @@ module Kura
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
-    def job(job_id, project_id: @default_project_id, &blk)
+    def job(job_id, location: nil, project_id: @default_project_id, &blk)
       if blk
-        @api.get_job(project_id, job_id) do |j, e|
+        @api.get_job(project_id, job_id, location: location) do |j, e|
           j.kura_api = self if j
           blk.call(j, e)
         end
       else
-        @api.get_job(project_id, job_id).tap{|j| j.kura_api = self if j }
+        @api.get_job(project_id, job_id, location: location).tap{|j| j.kura_api = self if j }
       end
     rescue
       process_error($!)
     end
 
-    def cancel_job(job, project_id: @default_project_id, &blk)
+    def cancel_job(job, location: nil, project_id: @default_project_id, &blk)
       case job
       when String
         jobid = job
@@ -612,13 +620,13 @@ module Kura
         raise TypeError, "Kura::Client#cancel_job accept String(job-id) or Google::Apis::BigqueryV2::Job"
       end
       if blk
-        @api.cancel_job(project_id, jobid) do |r, e|
+        @api.cancel_job(project_id, jobid, location: location) do |r, e|
           j = (r && r.job)
           j.kura_api = self if j
           blk.call(j, e)
         end
       else
-        @api.cancel_job(project_id, jobid).job.tap{|j| j.kura_api = self if j }
+        @api.cancel_job(project_id, jobid, location: location).job.tap{|j| j.kura_api = self if j }
       end
     end
 
@@ -638,19 +646,20 @@ module Kura
       return false
     end
 
-    def wait_job(job, timeout=60*10, project_id: @default_project_id)
+    def wait_job(job, timeout=60*10, location: nil, project_id: @default_project_id)
       case job
       when String
         job_id = job
       when Google::Apis::BigqueryV2::Job
         project_id = job.job_reference.project_id
         job_id = job.job_reference.job_id
+        location = job.job_reference.location
       else
         raise TypeError, "Kura::Client#wait_job accept String(job-id) or Google::Apis::BigqueryV2::Job"
       end
       expire = Time.now + timeout
       while expire > Time.now
-        j = job(job_id, project_id: project_id)
+        j = job(job_id, project_id: project_id, location: location)
         if job_finished?(j)
           return j
         end

@@ -1,9 +1,11 @@
-# 0.3.1
+# 0.4.0
 
 ## Enhancements
 
 * Handle table whose schema without 'mode' field. The tables created by New BigQuery Web Console could have such malformed schema.
   Thanks for GCPUG Slack for notice this issue.
+* Add location: parameter for `job`/`cancel_job`/`wait_job` methods.
+* `insert_dataset` can now create dataset with attributes like `location`.
 
 # 0.3.0
 

@@ -72,6 +72,21 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(@name) rescue nil
   end
 
+  def test_insert_dataset_with_location
+    @name = "Kura_test"
+
+    dataset = @client.dataset(@name)
+    assert_nil(dataset)
+
+    @client.insert_dataset({ dataset_reference: { dataset_id: @name }, location: "asia-northeast1" })
+    dataset = @client.dataset(@name)
+    assert_equal(@project_id, dataset.dataset_reference.project_id)
+    assert_equal(@name, dataset.dataset_reference.dataset_id)
+    assert_equal("asia-northeast1", dataset.location)
+  ensure
+    @client.delete_dataset(@name) rescue nil
+  end
+
   def test_tables
     @client.tables("samples", project_id: "publicdata").tap do |result|
       assert_equal(7, result.size)
@@ -701,6 +716,19 @@ class KuraIntegrationTest < Test::Unit::TestCase
       job.status.state == "DONE" or job.status.state == "PENDING"
     end
     err = assert_raise(Kura::ApiError) { @client.wait_job(jobid) }
+    power_assert do
+      err.reason == "stopped" and err.message =~ /Job execution was cancelled/
+    end
+  end
+
+  def test_cancel_job_with_location
+    job = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
+    job = @client.cancel_job(job.job_reference.job_id, location: job.job_reference.location)
+    power_assert do
+      # Sometimes jobs.cancel return "PENDING" job.
+      job.status.state == "DONE" or job.status.state == "PENDING"
+    end
+    err = assert_raise(Kura::ApiError) { @client.wait_job(job) }
     power_assert do
       err.reason == "stopped" and err.message =~ /Job execution was cancelled/
     end
