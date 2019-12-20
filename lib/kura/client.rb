@@ -468,7 +468,7 @@ module Kura
             type: s.type,
             mode: s.mode,
           }
-          if (sub_fields = f.fields)
+          if (sub_fields = s.fields)
             f[:fields] = normalize_schema(sub_fields)
           end
         end

@@ -153,6 +153,29 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_insert_table_with_schema_object
+    dataset = "_Kura_test"
+    table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    power_assert do
+      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}], friendly_name: "friend", description: "enemy")
+    end
+    t1 = @client.table(dataset, table)
+    power_assert do
+      @client.insert_table(dataset, table + "_copy", schema: t1.schema.fields)
+    end
+    t2 = @client.table(dataset, table + "_copy")
+    t1.schema.fields.zip(t2.schema.fields) do |f1, f2|
+      power_assert do
+        f1.name == f2.name && f1.type == f2.type && f1.mode == f2.mode
+      end
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_insert_table_view
     dataset = "_Kura_test"
     table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"

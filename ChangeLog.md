@@ -1,3 +1,9 @@
+# 0.4.1
+
+## Fixes
+
+* Fix NoMethodError when table schema fields from existing table for `load` and `insert_table`.
+
 # 0.4.0
 
 ## Enhancements
