@@ -43,7 +43,7 @@ client = Kura.client(.., scope: "https://www.googleapis.com/auth/drive")
 
 ```
 client.load("dataset", "table", "gs://mybucket/data.csv", wait: 120)
-client.query("SELECT * FROM [dataset.table];", dataset_id: "dest_dataset", table_id: dest_table", wait: 120)
+client.query("SELECT * FROM [dataset.table];", dataset_id: "dest_dataset", table_id: "dest_table", wait: 120)
 client.extract("dataset", "result", "gs://mybucket/extracted.csv", wait: 120)
 client.copy("src_dataset", "src_table", "dest_dataset", "dest_table", wait: 120)
 ```
