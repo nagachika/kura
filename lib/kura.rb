@@ -50,7 +50,13 @@ module Kura
       elsif project_id.is_a?(Hash)
         credential = project_id
       else
-        raise ArgumentError, "#{self.class.name}.client accept JSON credential file path or decoded Hash object."
+        begin
+          # get project id from metadata server
+          project_id = URI.open("http://metadata/computeMetadata/v1/project/project-id", "Metadata-Flavor" => "Google") do |f| f.read end
+          return self::Client.new(default_project_id: project_id)
+        rescue
+          raise ArgumentError, "#{self.class.name}.client accept JSON credential file path or decoded Hash object."
+        end
       end
       project_id = credential["project_id"]
       email_address = credential["client_email"]
