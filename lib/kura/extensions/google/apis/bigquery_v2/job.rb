@@ -16,5 +16,9 @@ class Google::Apis::BigqueryV2::Job
   def inspect
     "<##{self.class} job_id=#{self.job_reference.job_id rescue nil}>"
   end
+
+  def children
+    kura_api.jobs(parent_job_id: self.job_reference.job_id)
+  end
 end
 

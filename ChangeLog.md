@@ -3,6 +3,7 @@
 ## Enhancements
 
 * Add `jobs` to wrap `jobs.list` API method (https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/list)
+* Add `Job#children` as a shortcut method to obtain child jobs for SCRIPT type job.
 
 # 0.4.1
 
