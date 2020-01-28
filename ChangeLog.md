@@ -1,3 +1,9 @@
+# 0.4.2
+
+## Enhancements
+
+* Add `jobs` to wrap `jobs.list` API method (https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/list)
+
 # 0.4.1
 
 ## Fixes

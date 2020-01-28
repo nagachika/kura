@@ -596,6 +596,27 @@ module Kura
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
+    def jobs(project_id: @default_project_id,
+             all_users: nil,
+             max_creation_time: nil,
+             min_creation_time: nil,
+             max_results: nil,
+             page_token: nil,
+             parent_job_id: nil,
+             projection: nil,
+             state_filter: nil)
+      @api.list_jobs(
+        project_id,
+        all_users: all_users,
+        max_creation_time: max_creation_time,
+        min_creation_time: min_creation_time,
+        max_results: max_results,
+        page_token: page_token,
+        parent_job_id: parent_job_id,
+        projection: projection,
+        state_filter: state_filter)
+    end
+
     def job(job_id, location: nil, project_id: @default_project_id, &blk)
       if blk
         @api.get_job(project_id, job_id, location: location) do |j, e|
