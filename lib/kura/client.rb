@@ -654,13 +654,21 @@ module Kura
     def job_finished?(r)
       if r.status.state == "DONE"
         if r.status.error_result
-          raise Kura::ApiError.new(r.status.errors.map(&:reason).join(","),
-                                   r.status.errors.map{|e|
-                                     msg = "reason=#{e.reason} message=#{e.message}"
-                                     msg += " location=#{e.location}" if e.location
-                                     msg += " debug_infoo=#{e.debug_info}" if e.debug_info
-                                     msg
-                                   }.join("\n"))
+          if r.status.errors
+            raise Kura::ApiError.new(r.status.errors.map(&:reason).join(","),
+                                     r.status.errors.map{|e|
+              msg = "reason=#{e.reason} message=#{e.message}"
+              msg += " location=#{e.location}" if e.location
+              msg += " debug_info=#{e.debug_info}" if e.debug_info
+              msg
+            }.join("\n"))
+          else
+            e = r.status.error_result
+            msg = "reason=#{e.reason} message=#{e.message}"
+            msg += " location=#{e.location}" if e.location
+            msg += " debug_info=#{e.debug_info}" if e.debug_info
+            raise Kura::ApiError.new(e.reason, msg)
+          end
         end
         return true
       end

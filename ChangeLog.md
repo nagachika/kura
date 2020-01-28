@@ -1,3 +1,10 @@
+# 0.4.3
+
+## Fixes
+
+* Query job with SCRIPT type could contain `status.errorResult` without `status.errors` property.
+  Fix to handle this case properly.
+
 # 0.4.2
 
 ## Enhancements
