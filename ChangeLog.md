@@ -1,3 +1,9 @@
+# 0.4.4
+
+## Enhancements
+
+* Support [Routines API](https://cloud.google.com/bigquery/docs/reference/rest/v2/routines/).
+
 # 0.4.3
 
 ## Fixes

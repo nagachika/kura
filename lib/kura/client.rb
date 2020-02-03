@@ -737,5 +737,72 @@ module Kura
       return nil if $!.respond_to?(:status_code) and $!.status_code == 404
       process_error($!)
     end
+
+    # Routines API
+    def routines(dataset_id, project_id: @default_project_id, limit: 1000, page_token: nil, &blk)
+      if blk
+        @api.list_routines(project_id, dataset_id, max_results: limit, page_token: page_token) do |result, err|
+          result &&= (result.routines || [])
+          blk.call(result, err)
+        end
+      else
+        @api.list_routines(project_id, dataset_id, max_results: limit, page_token: page_token)
+      end
+    rescue
+      process_error($!)
+    end
+
+    def routine(dataset_id, routine_id, project_id: @default_project_id, &blk)
+      if blk
+        @api.get_routine(project_id, dataset_id, routine_id) do |result, err|
+          if err.respond_to?(:status_code) and err.status_code == 404
+            result = nil
+            err = nil
+          end
+          blk.call(result, err)
+        end
+      else
+        @api.get_routine(project_id, dataset_id, routine_id)
+      end
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
+    end
+
+    def delete_routine(dataset_id, routine_id, project_id: @default_project_id, &blk)
+      @api.delete_routine(project_id, dataset_id, routine_id, &blk)
+    rescue
+      return nil if $!.respond_to?(:status_code) and $!.status_code == 404
+      process_error($!)
+    end
+
+    def insert_routine(dataset_id,
+                       routine_id,
+                       body,
+                       project_id: @default_project_id,
+                       routine_type: "PROCEDURE",
+                       language: "SQL",
+                       arguments: [],
+                       return_type: nil,
+                       imported_libraries: [],
+                       description: nil)
+      @api.insert_routine(
+        project_id,
+        dataset_id,
+        Google::Apis::BigqueryV2::Routine.new(
+          routine_reference: Google::Apis::BigqueryV2::RoutineReference.new(
+            project_id: project_id,
+            dataset_id: dataset_id,
+            routine_id: routine_id
+          ),
+          arguments: arguments,
+          definition_body: body,
+          imported_libraries: imported_libraries,
+          language: language,
+          return_type: return_type,
+          routine_type: routine_type,
+          description: description
+        ))
+    end
   end
 end
