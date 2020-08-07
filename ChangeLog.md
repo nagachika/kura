@@ -1,3 +1,9 @@
+# 0.5.0
+
+## Changes
+
+* `Kura::Client#list_tabledata` now return TIMESTAMP value in ISO 8601 format String.
+
 # 0.4.4
 
 ## Enhancements

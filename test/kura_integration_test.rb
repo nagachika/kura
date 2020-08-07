@@ -423,6 +423,14 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
   end
 
+  def test_list_tabledata_with_TIMESTAMP
+    job = @client.query("SELECT TIMESTAMP('2020-01-01') AS a", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
+    dest = job.configuration.query.destination_table
+    power_assert do
+      @client.list_tabledata(dest.dataset_id, dest.table_id) == { total_rows: 1, next_token: nil, rows: [{"a" => "2020-01-01T00:00:00.000000Z"}] }
+    end
+  end
+
   def test_insert_tabledata
     dataset = "_Kura_test"
     table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"

@@ -1,5 +1,6 @@
 # coding: utf-8
 
+require "time"
 require "json"
 require "google/apis/bigquery_v2"
 require "googleauth"
@@ -268,6 +269,8 @@ module Kura
         end
       when "BOOLEAN"
         x.to_s == "true"
+      when "TIMESTAMP"
+        Time.at(Float(x)).utc.iso8601(6)
       when "RECORD"
         _convert_tabledata_row(x, field_info["fields"])
       else
