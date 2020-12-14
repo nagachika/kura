@@ -412,16 +412,16 @@ module Kura
               wait: nil,
               dry_run: false,
               &blk)
-      configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
-        query: Google::Apis::BigqueryV2::JobConfigurationQuery.new({
+      configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
+        query: Google::Apis::BigqueryV2::JobConfigurationQuery.new(
           query: sql,
           allow_large_results: normalize_parameter(allow_large_results),
           flatten_results: normalize_parameter(flatten_results),
           priority: priority,
           use_query_cache: normalize_parameter(use_query_cache),
           use_legacy_sql: use_legacy_sql,
-        })
-      })
+        )
+      )
       if mode
         configuration.query.write_disposition = mode_to_write_disposition(mode)
       end
@@ -436,15 +436,15 @@ module Kura
         configuration.query.maximum_bytes_billed = maximum_bytes_billed
       end
       if dataset_id and table_id
-        configuration.query.destination_table = Google::Apis::BigqueryV2::TableReference.new({ project_id: project_id, dataset_id: dataset_id, table_id: table_id })
+        configuration.query.destination_table = Google::Apis::BigqueryV2::TableReference.new(project_id: project_id, dataset_id: dataset_id, table_id: table_id)
       end
       if user_defined_function_resources
         configuration.query.user_defined_function_resources = Array(user_defined_function_resources).map do |r|
           r = r.to_s
           if r.start_with?("gs://")
-            Google::Apis::BigqueryV2::UserDefinedFunctionResource.new({ resource_uri: r })
+            Google::Apis::BigqueryV2::UserDefinedFunctionResource.new(resource_uri: r)
           else
-            Google::Apis::BigqueryV2::UserDefinedFunctionResource.new({ inline_code: r })
+            Google::Apis::BigqueryV2::UserDefinedFunctionResource.new(inline_code: r)
           end
         end
       end
@@ -502,26 +502,26 @@ module Kura
              &blk)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
-      configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
-        load: Google::Apis::BigqueryV2::JobConfigurationLoad.new({
-          destination_table: Google::Apis::BigqueryV2::TableReference.new({
+      configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
+        load: Google::Apis::BigqueryV2::JobConfigurationLoad.new(
+          destination_table: Google::Apis::BigqueryV2::TableReference.new(
             project_id: project_id,
             dataset_id: dataset_id,
             table_id: table_id,
-          }),
+          ),
           write_disposition: write_disposition,
           allow_jagged_rows: normalize_parameter(allow_jagged_rows),
           max_bad_records: max_bad_records,
           ignore_unknown_values: normalize_parameter(ignore_unknown_values),
           source_format: source_format,
-        })
-      })
+        )
+      )
       if dry_run
         configuration.dry_run = true
         wait = nil
       end
       if schema
-        configuration.load.schema = Google::Apis::BigqueryV2::TableSchema.new({ fields: normalize_schema(schema) })
+        configuration.load.schema = Google::Apis::BigqueryV2::TableSchema.new(fields: normalize_schema(schema))
       end
       if source_format == "CSV"
         configuration.load.field_delimiter = field_delimiter
@@ -550,18 +550,18 @@ module Kura
                 dry_run: false,
                 &blk)
       dest_uris = [ dest_uris ] if dest_uris.is_a?(String)
-      configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
-        extract: Google::Apis::BigqueryV2::JobConfigurationExtract.new({
+      configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
+        extract: Google::Apis::BigqueryV2::JobConfigurationExtract.new(
           compression: compression,
           destination_format: destination_format,
-          source_table: Google::Apis::BigqueryV2::TableReference.new({
+          source_table: Google::Apis::BigqueryV2::TableReference.new(
             project_id: project_id,
             dataset_id: dataset_id,
             table_id: table_id,
-          }),
+          ),
           destination_uris: dest_uris,
-        })
-      })
+        )
+      )
       if dry_run
         configuration.dry_run = true
         wait = nil
@@ -583,21 +583,21 @@ module Kura
              dry_run: false,
              &blk)
       write_disposition = mode_to_write_disposition(mode)
-      configuration = Google::Apis::BigqueryV2::JobConfiguration.new({
-        copy: Google::Apis::BigqueryV2::JobConfigurationTableCopy.new({
-          destination_table: Google::Apis::BigqueryV2::TableReference.new({
+      configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
+        copy: Google::Apis::BigqueryV2::JobConfigurationTableCopy.new(
+          destination_table: Google::Apis::BigqueryV2::TableReference.new(
             project_id: dest_project_id,
             dataset_id: dest_dataset_id,
             table_id: dest_table_id,
-          }),
-          source_table: Google::Apis::BigqueryV2::TableReference.new({
+          ),
+          source_table: Google::Apis::BigqueryV2::TableReference.new(
             project_id: src_project_id,
             dataset_id: src_dataset_id,
             table_id: src_table_id,
-          }),
+          ),
           write_disposition: write_disposition,
-        })
-      })
+        )
+      )
       if dry_run
         configuration.dry_run = true
         wait = nil
