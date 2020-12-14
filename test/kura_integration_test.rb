@@ -131,7 +131,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       @client.insert_dataset(dataset)
     end
     power_assert do
-      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}], friendly_name: "friend", description: "enemy")
+      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE", description: "Test Description"}], friendly_name: "friend", description: "enemy")
     end
     t = @client.table(dataset, table)
     power_assert do
@@ -149,6 +149,18 @@ class KuraIntegrationTest < Test::Unit::TestCase
     power_assert do
       t.type == "TABLE"
     end
+    power_assert do
+      t.schema.fields[0].name == "n"
+    end
+    power_assert do
+      t.schema.fields[0].type == "INTEGER"
+    end
+    power_assert do
+      t.schema.fields[0].mode == "NULLABLE"
+    end
+    power_assert do
+      t.schema.fields[0].description == "Test Description"
+    end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
   end
@@ -160,7 +172,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       @client.insert_dataset(dataset)
     end
     power_assert do
-      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}], friendly_name: "friend", description: "enemy")
+      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE", description: "Test Description"}], friendly_name: "friend", description: "enemy")
     end
     t1 = @client.table(dataset, table)
     power_assert do
@@ -169,7 +181,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     t2 = @client.table(dataset, table + "_copy")
     t1.schema.fields.zip(t2.schema.fields) do |f1, f2|
       power_assert do
-        f1.name == f2.name && f1.type == f2.type && f1.mode == f2.mode
+        f1.name == f2.name && f1.type == f2.type && f1.mode == f2.mode && f1.description == f2.description
       end
     end
   ensure
@@ -724,7 +736,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     table = "Kura_load_parameter_#{options.keys.join("_")}_test"
     schema = [
       { name: "f1", type: "STRING", mode: "NULLABLE" },
-      { name: "f2", type: "STRING", mode: "NULLABLE" },
+      { name: "f2", type: "STRING", mode: "NULLABLE", description: "desc2" },
     ]
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
@@ -734,6 +746,32 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
     power_assert do
       @client.list_tabledata(dataset, table) == {total_rows: expected.size, next_token: nil, rows: expected}
+    end
+    t = @client.table(dataset, table)
+    assert_equal(2, t.schema.fields.size)
+    power_assert do
+      t.schema.fields[0].name == "f1"
+    end
+    power_assert do
+      t.schema.fields[0].type == "STRING"
+    end
+    power_assert do
+      t.schema.fields[0].mode == "NULLABLE"
+    end
+    power_assert do
+      t.schema.fields[0].description.nil?
+    end
+    power_assert do
+      t.schema.fields[1].name == "f2"
+    end
+    power_assert do
+      t.schema.fields[1].type == "STRING"
+    end
+    power_assert do
+      t.schema.fields[1].mode == "NULLABLE"
+    end
+    power_assert do
+      t.schema.fields[1].description == "desc2"
     end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)

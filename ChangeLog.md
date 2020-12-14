@@ -4,6 +4,10 @@
 
 * `Kura::Client#list_tabledata` now return TIMESTAMP value in ISO 8601 format String.
 
+## Enhancements
+
+* Accept description field in schema specification at insert&load table.
+
 # 0.4.4
 
 ## Enhancements

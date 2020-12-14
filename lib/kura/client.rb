@@ -462,6 +462,9 @@ module Kura
             type: (s[:type] || s["type"]),
             mode: (s[:mode] || s["mode"]),
           }
+          if (desc = (s[:description] || s["description"]))
+            f[:description] = desc
+          end
           if (sub_fields = (s[:fields] || s["fields"]))
             f[:fields] = normalize_schema(sub_fields)
           end
@@ -471,6 +474,9 @@ module Kura
             type: s.type,
             mode: s.mode,
           }
+          if s.respond_to?(:description)
+            f[:description] = s.description
+          end
           if (sub_fields = s.fields)
             f[:fields] = normalize_schema(sub_fields)
           end
