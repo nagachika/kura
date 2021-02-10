@@ -1,3 +1,10 @@
+# 0.6.0
+
+## Changes
+
+* Replace runtime dependency "google-api-client.gem" -> "google-apis-bigquery_v2".
+  See https://github.com/groovenauts/gcs-ruby/pull/2://github.com/googleapis/google-api-ruby-client/blob/master/google-api-client/OVERVIEW.md for more details.
+
 # 0.5.0
 
 ## Changes
