@@ -1,3 +1,9 @@
+# 0.6.1
+
+## Enhancements
+
+* `job` method now accept `fields` keyword argument.
+
 # 0.6.0
 
 ## Changes

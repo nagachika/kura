@@ -626,14 +626,14 @@ module Kura
         state_filter: state_filter)
     end
 
-    def job(job_id, location: nil, project_id: @default_project_id, &blk)
+    def job(job_id, location: nil, project_id: @default_project_id, fields: nil, &blk)
       if blk
-        @api.get_job(project_id, job_id, location: location) do |j, e|
+        @api.get_job(project_id, job_id, location: location, fields: fields) do |j, e|
           j.kura_api = self if j
           blk.call(j, e)
         end
       else
-        @api.get_job(project_id, job_id, location: location).tap{|j| j.kura_api = self if j }
+        @api.get_job(project_id, job_id, location: location, fields: fields).tap{|j| j.kura_api = self if j }
       end
     rescue
       process_error($!)
