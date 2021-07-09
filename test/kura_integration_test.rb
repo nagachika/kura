@@ -780,6 +780,58 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_load_range_partitioning
+    dataset = "_Kura_test"
+    table = "Kura_load_range_partitioning_test1"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    schema = [
+      { name: "f1", type: "STRING", mode: "NULLABLE" },
+      { name: "i1", type: "INTEGER", mode: "NULLABLE" },
+    ]
+    io = StringIO.new(<<-EOC.gsub(/^\s+/, ""))
+      aaa,1
+      ccc,2
+    EOC
+    assert_nothing_raised do
+      job = @client.load(dataset, table, schema: schema, file: io, mode: :truncate,
+                         range_partitioning: { field: "i1", range: {start: 0, end: 10, interval: 1} })
+      job.wait(300)
+    end
+    assert_equal("i1", @client.table(dataset, table).range_partitioning.field)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_load_time_partitioning
+    dataset = "_Kura_test"
+    table = "Kura_load_range_partitioning_test1"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    schema = [
+      { name: "f1", type: "STRING", mode: "NULLABLE" },
+      { name: "t1", type: "TIMESTAMP", mode: "NULLABLE" },
+    ]
+    io = StringIO.new(<<-EOC.gsub(/^\s+/, ""))
+      aaa,1
+      ccc,2
+    EOC
+    assert_nothing_raised do
+      job = @client.load(dataset, table, schema: schema, file: io, mode: :truncate,
+                         time_partitioning: { field: "t1", type: "DAY", require_partition_filter: true, expiration_ms: 60000 })
+      job.wait(300)
+    end
+    t = @client.table(dataset, table)
+    assert_equal("t1", t.time_partitioning.field)
+    assert_equal(true, t.time_partitioning.require_partition_filter)
+    assert_equal("DAY", t.time_partitioning.type)
+    assert_equal(60000, t.time_partitioning.expiration_ms)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_cancel_job
     jobid = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
     job = @client.cancel_job(jobid)

@@ -1,3 +1,10 @@
+# 0.6.2
+
+## Enhancements
+
+* Support ruby 3.0.
+* Support range partitioning and time partitioning parameter for load job configuration.
+
 # 0.6.1
 
 ## Enhancements

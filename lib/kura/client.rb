@@ -494,6 +494,8 @@ module Kura
              quote: '"', skip_leading_rows: 0,
              source_format: "CSV",
              autodetect: false,
+             range_partitioning: nil,
+             time_partitioning: nil,
              project_id: @default_project_id,
              job_project_id: @default_project_id,
              job_id: nil,
@@ -502,6 +504,14 @@ module Kura
              &blk)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
+      case range_partitioning
+      when Hash
+        range_partitioning = Google::Apis::BigqueryV2::RangePartitioning.new(**range_partitioning)
+      end
+      case time_partitioning
+      when Hash
+        time_partitioning = Google::Apis::BigqueryV2::TimePartitioning.new(**time_partitioning)
+      end
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
         load: Google::Apis::BigqueryV2::JobConfigurationLoad.new(
           destination_table: Google::Apis::BigqueryV2::TableReference.new(
@@ -514,6 +524,8 @@ module Kura
           max_bad_records: max_bad_records,
           ignore_unknown_values: normalize_parameter(ignore_unknown_values),
           source_format: source_format,
+          range_partitioning: range_partitioning,
+          time_partitioning: time_partitioning,
         )
       )
       if dry_run
