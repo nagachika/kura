@@ -220,7 +220,7 @@ module Kura
         view: view,
         external_data_configuration: external_data_configuration)
       if time_partitioning
-        table.time_partitioning = Google::Apis::BigqueryV2::TimePartitioning.new(time_partitioning)
+        table.time_partitioning = Google::Apis::BigqueryV2::TimePartitioning.new(**time_partitioning)
       end
       @api.insert_table(project_id, dataset_id, table, &blk)
     rescue
