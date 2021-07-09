@@ -784,9 +784,12 @@ class KuraIntegrationTest < Test::Unit::TestCase
       # Sometimes jobs.cancel return "PENDING" job.
       job.status.state == "DONE" or job.status.state == "PENDING"
     end
-    err = assert_raise(Kura::ApiError) { @client.wait_job(jobid) }
-    power_assert do
-      err.reason == "stopped" and err.message =~ /Job execution was cancelled/
+    begin
+      @client.wait_job(jobid)
+    rescue Kura::ApiError => err
+      power_assert do
+        err.reason == "stopped" and err.message =~ /Job execution was cancelled/
+      end
     end
   end
 
@@ -797,9 +800,12 @@ class KuraIntegrationTest < Test::Unit::TestCase
       # Sometimes jobs.cancel return "PENDING" job.
       job.status.state == "DONE" or job.status.state == "PENDING"
     end
-    err = assert_raise(Kura::ApiError) { @client.wait_job(job) }
-    power_assert do
-      err.reason == "stopped" and err.message =~ /Job execution was cancelled/
+    begin
+      @client.wait_job(job)
+    rescue Kura::ApiError => err
+      power_assert do
+        err.reason == "stopped" and err.message =~ /Job execution was cancelled/
+      end
     end
   end
 
