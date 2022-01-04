@@ -1,3 +1,11 @@
+# 0.6.3
+
+## Changes
+
+* Add `convert_numeric_to_float` keyword argument in `list_tabledata` method.
+  If `convert_numeric_to_float: true` is specified, the value from a NUMMERIC column will be converted to Float.
+  The default value for `convert_numeric_to_float` is true.
+
 # 0.6.2
 
 ## Enhancements

@@ -247,7 +247,7 @@ module Kura
       process_error($!)
     end
 
-    def _convert_tabledata_field(x, field_info)
+    def _convert_tabledata_field(x, field_info, convert_numeric_to_float: true)
       if x.nil? and (field_info["mode"] == "NULLABLE" or field_info["mode"].nil?) # The tables created by New BigQuery Console could have schema without mode...
         return nil
       end
@@ -272,35 +272,41 @@ module Kura
       when "TIMESTAMP"
         Time.at(Float(x)).utc.iso8601(6)
       when "RECORD"
-        _convert_tabledata_row(x, field_info["fields"])
+        _convert_tabledata_row(x, field_info["fields"], convert_numeric_to_float: convert_numeric_to_float)
+      when "NUMERIC"
+        if convert_numeric_to_float
+          Float(x)
+        else
+          x
+        end
       else
         x
       end
     end
 
-    def _convert_tabledata_row(row, schema)
+    def _convert_tabledata_row(row, schema, convert_numeric_to_float: true)
       (row.respond_to?(:f) ? row.f : row["f"]).zip(schema).each_with_object({}) do |(v, s), tbl|
         v = JSON.parse(v.to_json)
         if s["mode"] == "REPEATED"
-          tbl[s["name"]] = v["v"].map{|c| _convert_tabledata_field(c["v"], s) }
+          tbl[s["name"]] = v["v"].map{|c| _convert_tabledata_field(c["v"], s, convert_numeric_to_float: convert_numeric_to_float) }
         else
-          tbl[s["name"]] = _convert_tabledata_field(v["v"], s)
+          tbl[s["name"]] = _convert_tabledata_field(v["v"], s, convert_numeric_to_float: convert_numeric_to_float)
         end
       end
     end
 
-    def format_tabledata(r, schema)
+    def format_tabledata(r, schema, convert_numeric_to_float: true)
       {
         total_rows: r.total_rows.to_i,
         next_token: r.page_token,
         rows: (r.rows || []).map do |row|
-          _convert_tabledata_row(row, schema)
+          _convert_tabledata_row(row, schema, convert_numeric_to_float: convert_numeric_to_float)
         end
       }
     end
     private :format_tabledata
 
-    def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil, &blk)
+    def list_tabledata(dataset_id, table_id, project_id: @default_project_id, start_index: 0, max_result: 100, page_token: nil, schema: nil, convert_numeric_to_float: true, &blk)
       if schema.nil?
         _t = table(dataset_id, table_id, project_id: project_id)
         if _t
@@ -314,13 +320,13 @@ module Kura
       if blk
         @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token) do |r, err|
           if r
-            r = format_tabledata(r, schema)
+            r = format_tabledata(r, schema, convert_numeric_to_float: convert_numeric_to_float)
           end
           blk.call(r, err)
         end
       else
         r = @api.list_table_data(project_id, dataset_id, table_id, max_results: max_result, start_index: start_index, page_token: page_token)
-        format_tabledata(r, schema)
+        format_tabledata(r, schema, convert_numeric_to_float: convert_numeric_to_float)
       end
     rescue
       process_error($!)
