@@ -1,4 +1,8 @@
-# 0.6.4
+# 1.0.0
+
+## Breaking Changes
+
+* The default value of `use_legacy_sql` is now turn to false.
 
 ## Enhancements
 

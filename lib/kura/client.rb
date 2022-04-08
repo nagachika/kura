@@ -199,7 +199,7 @@ module Kura
     def insert_table(dataset_id, table_id, project_id: @default_project_id, expiration_time: nil,
                      friendly_name: nil, schema: nil, description: nil,
                      query: nil, external_data_configuration: nil,
-                     use_legacy_sql: true,
+                     use_legacy_sql: false,
                      time_partitioning: nil,
                      &blk)
       if expiration_time
@@ -408,7 +408,7 @@ module Kura
               priority: "INTERACTIVE",
               use_query_cache: true,
               user_defined_function_resources: nil,
-              use_legacy_sql: true,
+              use_legacy_sql: false,
               maximum_billing_tier: nil,
               maximum_bytes_billed: nil,
               external_data_configuration: nil,

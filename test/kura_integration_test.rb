@@ -69,7 +69,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_equal("invalid", err.reason)
     assert_match(/invalid:dataset/, err.message)
   ensure
-    @client.delete_dataset(@name) rescue nil
+    @client.delete_dataset(@name) rescue puts "delete dataset #{@name} failed: #{$!}"
   end
 
   def test_insert_dataset_with_location
@@ -194,7 +194,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     unless @client.dataset(dataset)
       @client.insert_dataset(dataset)
     end
-    query = "SELECT COUNT(*) FROM [publicdata:samples.wikipedia];"
+    query = "SELECT COUNT(*) FROM `publicdata.samples.wikipedia`;"
     power_assert do
       @client.insert_table(dataset, table, query: query)
     end
@@ -212,7 +212,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       t.type == "VIEW"
     end
     power_assert do
-      t.view.use_legacy_sql == true
+      t.view.use_legacy_sql == false
     end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
@@ -457,7 +457,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
     @client.insert_tabledata(dataset, table, [{n: 42, s: "Hello, World!"}])
     sleep 5
-    job = @client.query("SELECT * from [#{dataset}.#{table}] LIMIT 100", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
+    job = @client.query("SELECT * from `#{dataset}.#{table}` LIMIT 100", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
     dest = job.configuration.query.destination_table
     power_assert do
       @client.list_tabledata(dest.dataset_id, dest.table_id) == { total_rows: 1, next_token: nil, rows: [{"n" => 42, "s" => "Hello, World!"}] }
@@ -481,7 +481,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
         }
         @client.insert_table(dataset, table, external_data_configuration: external_data_configuration)
         sleep 5
-        job = @client.query("SELECT * FROM [#{dataset}.#{table}];", allow_large_results: false, wait: 10)
+        job = @client.query("SELECT * FROM `#{dataset}.#{table}`;", allow_large_results: false, wait: 10)
         dest = job.configuration.query.destination_table
         result = @client.list_tabledata(dest.dataset_id, dest.table_id)
         assert_not_equal(0, result[:total_rows])
@@ -533,7 +533,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     job_id = SecureRandom.uuid
     job = nil
     assert_nothing_raised do
-      job = @client.query("SELECT count(*) FROM [publicdata:samples.wikipedia]", dataset_id: dataset, table_id: table, job_id: job_id, wait: 60)
+      job = @client.query("SELECT count(*) FROM `publicdata.samples.wikipedia`", dataset_id: dataset, table_id: table, job_id: job_id, wait: 60)
     end
     power_assert do
       job.job_reference.job_id == job_id
@@ -561,7 +561,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     EOF
 
     assert_nothing_raised do
-      @client.query(q, dataset_id: dataset, table_id: table, user_defined_function_resources: [udf], wait: 60)
+      @client.query(q, dataset_id: dataset, table_id: table, user_defined_function_resources: [udf], use_legacy_sql: true, wait: 60)
     end
 
     assert_equal({next_token: nil, rows: [{"name"=>"my","domain"=>"example.com"}], total_rows: 1}, @client.list_tabledata(dataset, table))
@@ -577,7 +577,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       @client.insert_dataset(dataset)
     end
 
-    q = "SELECT title FROM [publicdata:samples.wikipedia];"
+    q = "SELECT title FROM `publicdata.samples.wikipedia`;"
 
     job = nil
     assert_nothing_raised do
@@ -645,7 +645,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       @client.insert_dataset(dataset)
     end
 
-    q = %{SELECT COUNT(*) FROM publicdata:samples.wikipedia;}
+    q = %{SELECT COUNT(*) FROM publicdata.samples.wikipedia;}
 
     job = nil
     assert_nothing_raised do
@@ -668,7 +668,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
       @client.insert_dataset(dataset)
     end
 
-    q = %{SELECT COUNT(*) FROM publicdata:samples.wikipedia;}
+    q = %{SELECT COUNT(*) FROM publicdata.samples.wikipedia;}
 
     job = nil
     assert_nothing_raised do
@@ -677,7 +677,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
 
     assert_equal(0, Integer(job.configuration.query.maximum_bytes_billed))
 
-    q = %{SELECT * FROM publicdata:samples.wikipedia;}
+    q = %{SELECT * FROM publicdata.samples.wikipedia;}
     job = nil
     err = assert_raise(Kura::ApiError) do
       job = @client.query(q, dataset_id: dataset, table_id: table, maximum_bytes_billed: 0, wait: 120)
@@ -874,7 +874,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
   end
 
   def test_cancel_job
-    jobid = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
+    jobid = @client.query("SELECT COUNT(*) FROM publicdata.samples.wikipedia", allow_large_results: false, priority: "BATCH")
     job = @client.cancel_job(jobid)
     power_assert do
       # Sometimes jobs.cancel return "PENDING" job.
@@ -890,7 +890,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
   end
 
   def test_cancel_job_with_location
-    job = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
+    job = @client.query("SELECT COUNT(*) FROM publicdata.samples.wikipedia", allow_large_results: false, priority: "BATCH")
     job = @client.cancel_job(job.job_reference.job_id, location: job.job_reference.location)
     power_assert do
       # Sometimes jobs.cancel return "PENDING" job.
@@ -938,7 +938,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
         assert_nil(result)
       end
     end
-    job = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
+    job = @client.query("SELECT COUNT(*) FROM publicdata.samples.wikipedia", allow_large_results: false, priority: "BATCH")
     @client.batch do
       @client.cancel_job(job.job_reference.job_id) do |j, err|
         assert_nil(err)
