@@ -1,3 +1,3 @@
 module Kura
-  VERSION = "0.6.4"
+  VERSION = "1.0.0"
 end
