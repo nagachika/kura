@@ -689,6 +689,22 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_query_with_default_dataset
+    dataset = "_Kura_test"
+    table = "insert_table_#{"%x" % Random.rand(0xffffffff)}"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}])
+
+    j = assert_nothing_raised do
+      @client.query("select count(*) from `#{table}`", use_legacy_sql: false, default_dataset: {dataset_id: dataset}, wait: 120)
+    end
+    assert_equal(nil, j.status.errors)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_media_upload
     dataset = "_Kura_test"
     table = "Kura_upload_test1"

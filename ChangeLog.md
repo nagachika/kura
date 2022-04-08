@@ -1,3 +1,10 @@
+# 0.6.4
+
+## Enhancements
+
+* Add `default_dataset` keyword argumet in query method.
+  See https://cloud.google.com/bigquery/docs/reference/rest/v2/Job#JobConfigurationQuery.FIELDS.default_dataset
+
 # 0.6.3
 
 ## Changes

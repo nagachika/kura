@@ -412,6 +412,7 @@ module Kura
               maximum_billing_tier: nil,
               maximum_bytes_billed: nil,
               external_data_configuration: nil,
+              default_dataset: nil,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
               job_id: nil,
@@ -426,6 +427,7 @@ module Kura
           priority: priority,
           use_query_cache: normalize_parameter(use_query_cache),
           use_legacy_sql: use_legacy_sql,
+          default_dataset: default_dataset,
         )
       )
       if mode
