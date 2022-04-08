@@ -412,12 +412,12 @@ module Kura
               maximum_billing_tier: nil,
               maximum_bytes_billed: nil,
               external_data_configuration: nil,
-              default_dataset: nil,
               project_id: @default_project_id,
               job_project_id: @default_project_id,
               job_id: nil,
               wait: nil,
               dry_run: false,
+              **kwrest,
               &blk)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
         query: Google::Apis::BigqueryV2::JobConfigurationQuery.new(
@@ -427,7 +427,6 @@ module Kura
           priority: priority,
           use_query_cache: normalize_parameter(use_query_cache),
           use_legacy_sql: use_legacy_sql,
-          default_dataset: default_dataset,
         )
       )
       if mode
@@ -458,6 +457,13 @@ module Kura
       end
       if external_data_configuration
         configuration.query.table_definitions = external_data_configuration
+      end
+      kwrest.each do |kw, opt|
+        if configuration.query.respond_to?("#{kw}=")
+          configuration.query.__send__("#{kw}=", opt)
+        else
+          raise ArgumentError, "Unknown keyword argument for Kura::Client#query: #{kw}"
+        end
       end
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
@@ -509,6 +515,7 @@ module Kura
              job_id: nil,
              file: nil, wait: nil,
              dry_run: false,
+             **kwrest,
              &blk)
       write_disposition = mode_to_write_disposition(mode)
       source_uris = [source_uris] if source_uris.is_a?(String)
@@ -555,6 +562,13 @@ module Kura
       unless file
         configuration.load.source_uris = source_uris
       end
+      kwrest.each do |kw, opt|
+        if configuration.load.respond_to?("#{kw}=")
+          configuration.load.__send__("#{kw}=", opt)
+        else
+          raise ArgumentError, "Unknown keyword argument for Kura::Client#load: #{kw}"
+        end
+      end
       insert_job(configuration, media: file, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
@@ -568,6 +582,7 @@ module Kura
                 job_id: nil,
                 wait: nil,
                 dry_run: false,
+                **kwrest,
                 &blk)
       dest_uris = [ dest_uris ] if dest_uris.is_a?(String)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
@@ -590,6 +605,13 @@ module Kura
         configuration.extract.field_delimiter = field_delimiter
         configuration.extract.print_header = normalize_parameter(print_header)
       end
+      kwrest.each do |kw, opt|
+        if configuration.extract.respond_to?("#{kw}=")
+          configuration.extract.__send__("#{kw}=", opt)
+        else
+          raise ArgumentError, "Unknown keyword argument for Kura::Client#extract: #{kw}"
+        end
+      end
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end
 
@@ -601,6 +623,7 @@ module Kura
              job_id: nil,
              wait: nil,
              dry_run: false,
+             **kwrest,
              &blk)
       write_disposition = mode_to_write_disposition(mode)
       configuration = Google::Apis::BigqueryV2::JobConfiguration.new(
@@ -621,6 +644,13 @@ module Kura
       if dry_run
         configuration.dry_run = true
         wait = nil
+      end
+      kwrest.each do |kw, opt|
+        if configuration.copy.respond_to?("#{kw}=")
+          configuration.copy.__send__("#{kw}=", opt)
+        else
+          raise ArgumentError, "Unknown keyword argument for Kura::Client#copy: #{kw}"
+        end
       end
       insert_job(configuration, wait: wait, job_id: job_id, project_id: job_project_id, &blk)
     end

@@ -849,6 +849,30 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_load_with_null_marker
+    dataset = "_Kura_test"
+    table = "Kura_load_with_null_marker_test1"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    schema = [
+      { name: "s1", type: "STRING", mode: "NULLABLE" },
+      { name: "s2", type: "STRING", mode: "NULLABLE" },
+    ]
+    io = StringIO.new(<<-EOC.gsub(/^\s+/, ""))
+      \N,aaa
+      ,bbb
+    EOC
+    assert_nothing_raised do
+      job = @client.load(dataset, table, schema: schema, file: io, mode: :truncate, null_marker: "\N")
+      job.wait(300)
+    end
+    data = @client.list_tabledata(dataset, table)
+    assert_equal([{"s1" => nil, "s2" => "aaa"}, {"s1" => "", "s2" => "bbb"}], data[:rows])
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_cancel_job
     jobid = @client.query("SELECT COUNT(*) FROM publicdata:samples.wikipedia", allow_large_results: false, priority: "BATCH")
     job = @client.cancel_job(jobid)
@@ -962,6 +986,32 @@ class KuraIntegrationTest < Test::Unit::TestCase
     dest = @client.list_tabledata(dataset, table)
     assert_equal(src[:total_rows], dest[:total_rows])
     assert_equal(src[:rows], dest[:rows])
+
+    @client.delete_table(dataset, table)
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
+  def test_copy_with_destination_expiration_time
+    src_project = "publicdata"
+    src_dataset = "samples"
+    src_table = "shakespeare"
+    dataset = "_Kura_test"
+    table = "Kura_copy"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+
+    assert_nothing_raised do
+      @client.copy(src_dataset, src_table, dataset, table, src_project_id: src_project, destination_expiration_time: (Time.now+60).iso8601, wait: 60)
+    end
+
+    src = @client.list_tabledata(src_dataset, src_table, project_id: src_project)
+    dest = @client.list_tabledata(dataset, table)
+    assert_equal(src[:total_rows], dest[:total_rows])
+    assert_equal(src[:rows], dest[:rows])
+
+    assert_not_equal(nil, @client.table(dataset, table).expiration_time)
 
     @client.delete_table(dataset, table)
   ensure

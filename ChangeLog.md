@@ -2,8 +2,7 @@
 
 ## Enhancements
 
-* Add `default_dataset` keyword argumet in query method.
-  See https://cloud.google.com/bigquery/docs/reference/rest/v2/Job#JobConfigurationQuery.FIELDS.default_dataset
+* Now load/query/extract/copy methods accept keyword rest argument and pass the options to the JobConfiguration properties.
 
 # 0.6.3
 
