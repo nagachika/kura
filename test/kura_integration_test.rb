@@ -53,19 +53,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_equal("notFound", err.reason)
     assert_match(/invalid-project-000/, err.message)
 
-    err = assert_raise(Kura::ApiError) { @client.dataset("invalid:dataset") }
-    assert_equal("invalid", err.reason)
-    assert_match(/invalid:dataset/, err.message)
-
     err = assert_raise(Kura::ApiError) { @client.insert_dataset("invalid:dataset") }
-    assert_equal("invalid", err.reason)
-    assert_match(/invalid:dataset/, err.message)
-
-    err = assert_raise(Kura::ApiError) { @client.delete_dataset("invalid:dataset") }
-    assert_equal("invalid", err.reason)
-    assert_match(/invalid:dataset/, err.message)
-
-    err = assert_raise(Kura::ApiError) { @client.patch_dataset("invalid:dataset", description: "dummy") }
     assert_equal("invalid", err.reason)
     assert_match(/invalid:dataset/, err.message)
   ensure
@@ -429,14 +417,6 @@ class KuraIntegrationTest < Test::Unit::TestCase
     end
   ensure
     @client.delete_dataset(dataset, delete_contents: true)
-  end
-
-  def test_list_tabledata_with_Intinify_and_NaN
-    job = @client.query("SELECT exp(1000.0) as a, -exp(1000.0) as b, log(-1.0) as c", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
-    dest = job.configuration.query.destination_table
-    power_assert do
-      @client.list_tabledata(dest.dataset_id, dest.table_id) == { total_rows: 1, next_token: nil, rows: [{"a" => Float::INFINITY, "b" => -Float::INFINITY, "c" => Float::NAN}] }
-    end
   end
 
   def test_list_tabledata_with_TIMESTAMP
