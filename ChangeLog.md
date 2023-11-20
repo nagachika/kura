@@ -1,5 +1,11 @@
 # 1.0.0
 
+## Enhancements
+
+* `insert_table` method accept `clustering_fields` argument.
+
+# 1.0.0
+
 ## Breaking Changes
 
 * The default value of `use_legacy_sql` is now turn to false.
