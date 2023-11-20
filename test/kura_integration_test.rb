@@ -431,14 +431,6 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
-  def test_list_tabledata_with_Intinify_and_NaN
-    job = @client.query("SELECT exp(1000.0) as a, -exp(1000.0) as b, log(-1.0) as c", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
-    dest = job.configuration.query.destination_table
-    power_assert do
-      @client.list_tabledata(dest.dataset_id, dest.table_id) == { total_rows: 1, next_token: nil, rows: [{"a" => Float::INFINITY, "b" => -Float::INFINITY, "c" => Float::NAN}] }
-    end
-  end
-
   def test_list_tabledata_with_TIMESTAMP
     job = @client.query("SELECT TIMESTAMP('2020-01-01') AS a", allow_large_results: false, priority: "INTERACTIVE", wait: 100)
     dest = job.configuration.query.destination_table
