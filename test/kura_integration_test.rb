@@ -293,6 +293,29 @@ class KuraIntegrationTest < Test::Unit::TestCase
     @client.delete_dataset(dataset, delete_contents: true)
   end
 
+  def test_insert_clustered_table
+    dataset = "_Kura_test"
+    table = "insert_clustered_table"
+    unless @client.dataset(dataset)
+      @client.insert_dataset(dataset)
+    end
+    power_assert do
+      @client.insert_table(dataset, table, schema: [{name: "n", type: "INTEGER", mode: "NULLABLE"}], clustering_fields: ["n"])
+    end
+    t = @client.table(dataset, table)
+    power_assert do
+      t.table_reference.dataset_id == dataset
+    end
+    power_assert do
+      t.table_reference.table_id == table
+    end
+    power_assert do
+      t.clustering.fields == ["n"]
+    end
+  ensure
+    @client.delete_dataset(dataset, delete_contents: true)
+  end
+
   def test_patch_table
     dataset = "_Kura_test"
     table = "patch_table"

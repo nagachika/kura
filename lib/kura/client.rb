@@ -201,6 +201,7 @@ module Kura
                      query: nil, external_data_configuration: nil,
                      use_legacy_sql: false,
                      time_partitioning: nil,
+                     clustering_fields: [],
                      &blk)
       if expiration_time
         expiration_time = (expiration_time.to_f * 1000.0).to_i
@@ -221,6 +222,9 @@ module Kura
         external_data_configuration: external_data_configuration)
       if time_partitioning
         table.time_partitioning = Google::Apis::BigqueryV2::TimePartitioning.new(**time_partitioning)
+      end
+      if clustering_fields and clustering_fields.size > 0
+        table.clustering = Google::Apis::BigqueryV2::Clustering.new(fields: clustering_fields)
       end
       @api.insert_table(project_id, dataset_id, table, &blk)
     rescue
