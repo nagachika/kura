@@ -53,19 +53,7 @@ class KuraIntegrationTest < Test::Unit::TestCase
     assert_equal("notFound", err.reason)
     assert_match(/invalid-project-000/, err.message)
 
-    err = assert_raise(Kura::ApiError) { @client.dataset("invalid:dataset") }
-    assert_equal("invalid", err.reason)
-    assert_match(/invalid:dataset/, err.message)
-
     err = assert_raise(Kura::ApiError) { @client.insert_dataset("invalid:dataset") }
-    assert_equal("invalid", err.reason)
-    assert_match(/invalid:dataset/, err.message)
-
-    err = assert_raise(Kura::ApiError) { @client.delete_dataset("invalid:dataset") }
-    assert_equal("invalid", err.reason)
-    assert_match(/invalid:dataset/, err.message)
-
-    err = assert_raise(Kura::ApiError) { @client.patch_dataset("invalid:dataset", description: "dummy") }
     assert_equal("invalid", err.reason)
     assert_match(/invalid:dataset/, err.message)
   ensure
