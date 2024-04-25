@@ -1,4 +1,10 @@
-# 1.0.0
+# 1.0.2
+
+## Changes
+
+* Handle SystemCallError and OpenSSL::SSL::SSLError as Kura::ApiError.
+
+# 1.0.1
 
 ## Enhancements
 
