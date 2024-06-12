@@ -1,3 +1,10 @@
+# 1.0.3
+
+## Changes
+
+* Revert latest changeset `Handle SystemCallError and OpenSSL::SSL::SSLError as Kura::ApiError.`
+  See https://github.com/ruby/openssl/pull/730.
+
 # 1.0.2
 
 ## Changes
