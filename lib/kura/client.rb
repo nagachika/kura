@@ -68,8 +68,6 @@ module Kura
           errors = "HTTP Status: #{err.status_code}\nHeaders: #{err.header.inspect}\nBody:\n#{err.body}"
         end
         raise Kura::ApiError.new(reason, errors)
-      elsif err.is_a?(SystemCallError) or err.is_a?(OpenSSL::SSL::SSLError)
-        raise Kura::ApiError.new("internalError", err.message)
       else
         raise err
       end
